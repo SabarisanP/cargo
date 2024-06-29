@@ -1,0 +1,259 @@
+﻿
+@model  Ezee.TicketBooking.Client.Model.PrintTicket
+@{
+    decimal totFare = 0;
+    decimal totServiceTax = 0;
+    decimal totNetAmt = 0;
+    string cancelledStatusCode = "CA";
+    decimal totCancellationAmt = 0;
+}
+
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Print Ticket @Model.passegerMobleNo</title>
+    <link href="http://www.ezeebits.com/assets/icons/font-awesome/css/font-awesome.min.css?4" rel="stylesheet" />
+
+    <style>
+        * {
+            font: normal 13px/20px arial;
+        }
+
+        strong {
+            font-weight: bold;
+        }
+
+        .border-top {
+            border-top: 1px solid #ccc;
+        }
+
+        .grid {
+            border: solid #ccc;
+            border-width: 1px 0 0 1px !important;
+        }
+
+            .grid th, .grid td {
+                border: solid #ccc !important;
+                border-width: 0 1px 1px 0 !important;
+            }
+
+        .cancelled-seat {
+            text-decoration: line-through;
+        }
+    </style>
+
+</head>
+<body>
+    <table cellpadding="5" cellspacing="0" width="98%" align="center">
+        <tr>
+            <td align="center">  <img src="trip_chart_logo.jpg"> </td>
+        </tr>
+        <tr>
+            <td align="right" style="font-size:10px"> @Model.user.name @DateTime.Now.ToString("dd/MM/yyyy hh:mm tt") </td>
+        </tr>
+        <tr>
+            <td class="border-top">
+                <table cellspacing="0" cellpadding="5" border="0" width="98%">
+                    <tbody>
+                        <tr>
+                            <td width="25%">
+                                <strong style="font-size:15px;">PNR Number</strong><br>
+                                @Model.bookingCode &nbsp;
+                                <i class="fa fa-buysellads"></i>
+                            </td>
+                            <td width="25%">
+                                <strong style="font-size:15px;">Travel Date/Time</strong> <br>
+                                @Convert.ToDateTime(Model.fromStation.stationPoint[0].dateTime).ToString("dd/MM/yyyy hh:mm tt");
+
+                            </td>
+                            <td width="25%">
+                                <strong style="font-size:15px;">Route</strong>  <br>
+                                @Model.fromStation.name - @Model.toStation.name
+                            </td>
+                            <td width="25%">
+                                <strong style="font-size:15px;">Bus Type</strong>  <br>
+                                @Model.bus.name
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="2">
+                                <strong style="font-size:15px;">Boarding info</strong> <br>
+                                @Model.fromStation.stationPoint[0].address
+                                <br>
+                                @Model.fromStation.stationPoint[0].landmark
+                                <br />
+                                Contact :@Model.fromStation.stationPoint[0].number
+                            </td>
+
+                            <td colspan="2">
+                                <strong style="font-size:15px;">Alighting Info</strong> <br>
+                                @Model.toStation.stationPoint[0].address
+                                <br>
+                                @Model.toStation.stationPoint[0].landmark
+                                <br />
+                                Contact :@Model.toStation.stationPoint[0].number
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <strong style="font-size:15px;">Passenger Mobile</strong><br>
+                                @Model.passegerMobleNo
+                            </td>
+                            <td>
+                                <strong style="font-size:15px;">Booking Info</strong><br>
+                                @Model.user.name  @Convert.ToDateTime(Model.transactionDate).ToString("dd/MM/yyyy hh:mm tt"))
+                            </td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <table width="98%" border="0" cellpadding="1" cellspacing="0" class="grid">
+                    <tr bgcolor="#F5F5F5">
+                        <th width="35%" align="left"><strong>Passenger Name</strong></th>
+                        <th width="10%" align="center"><strong>Seat No</strong> </th>
+                        <th width="10%" align="center"><strong>Gender</strong></th>
+                        <th width="10%" align="center"><strong>Age</strong></th>
+                        <th width="15%" align="center"><strong>Status</strong></th>
+                        <th width="15%" align="right"><strong>Fare</strong></th>
+                    </tr>
+
+                    @foreach (Ezee.TicketBooking.Client.Model.PrintTicketDetail pd in Model.ticketDetails)
+                    {
+                        totFare = totFare + pd.seatFare;
+                        totServiceTax = totServiceTax + pd.serviceTax;
+                        totNetAmt = totNetAmt + pd.seatFare + pd.serviceTax;
+                        totCancellationAmt = totCancellationAmt + pd.cancellationCharges;
+
+                        <tr class="@(pd.seatStatus.code == cancelledStatusCode ? "cancel-seat" : "" )">
+                            <td>@pd.passengerName</td>
+                            <td align="center">@pd.seatName</td>
+                            <td align="center">@pd.passengerGendar</td>
+                            <td align="center">@pd.passengerAge</td>
+                            <td align="center" nowrap>@pd.seatStatus.name</td>
+                            <td align="right"><i class="fa fa-rupee"></i> @pd.seatFare</td>
+                        </tr>
+                    }
+
+                </table>
+
+                <br>
+
+                <table width="98%" border="0" cellspacing="0">
+                    <tr>
+                        <td width="40%">&nbsp;</td>
+                        <td width="27%" align="right" valign="top">
+                            @if (totCancellationAmt > 0)
+                            {
+
+                                <table width="100%" border="0" cellpadding="1" cellspacing="0" class="grid">
+                                    <tr>
+                                        <td align="center" colspan="2" class="bold" bgcolor="#F5F5F5"><strong>Cancellation</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td align="right"> Gross Amount :</td>
+                                        <td align="right"> @totFare </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td align="right"> Service Tax :</td>
+                                        <td align="right">  @totServiceTax</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td align="right"> Cancellation Charge :</td>
+                                        <td align="right">- @totCancellationAmt </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td align="right" class="bold"> Refund :</td>
+                                        <td align="right" class="bold">@(totFare + totServiceTax - totCancellationAmt)</td>
+                                    </tr>
+                                </table>
+                            }
+
+                        </td>
+                        <td width="6%">&nbsp;</td>
+                        <td width="27%" align="right" valign="top">
+                            <table width="100%" border="0" cellpadding="1" cellspacing="0" class="grid">
+                                <tr>
+                                    <td align="center" colspan="2" class="bold" bgcolor="#F5F5F5"><strong>Booking</strong></td>
+                                </tr>
+                                <tr>
+                                    <td align="right"> Gross Amount :</td>
+                                    <td align="right"> @totFare</td>
+                                </tr>
+
+                                <tr>
+                                    <td align="right"> Service Tax :</td>
+                                    <td align="right">@totServiceTax </td>
+                                </tr>
+                                <tr>
+                                    <td align="right" class="bold"> Total :</td>
+                                    <td align="right" class="bold">@totNetAmt </td>
+                                </tr>
+
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td> <strong>Cancellation Policy </strong> </td>
+        </tr>
+        <tr>
+            <td>
+                <table width="98%" border="0" cellpadding="1" cellspacing="0" class="" style="font-size:12px;">
+                    <thead>
+                        <tr bgcolor="#F5F5F5">
+                            <td width="50%"><strong>Timing</strong></td>
+                            <td><strong>Deduction</strong></td>
+                            <td><strong>Refund</strong></td>
+                            <td><strong>Charges</strong></td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (Ezee.TicketBooking.Client.Model.PrnPolicyList dp in Model.cancellationTerms.policyList)
+                        {
+                            <tr>
+                                <td>@dp.term</td>
+                                <td>@dp.deductionAmountTxt</td>
+                                <td> @dp.refundAmountTxt </td>
+                                <td>@dp.chargesTxt</td>
+                            </tr>
+                        }
+
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td> <strong>Terms & Conditions </strong></td>
+        </tr>
+
+        <tr>
+            <td>
+                <table width="98%" border="0" cellpadding="1" cellspacing="0" class="" style="font-size:12px;">
+                    <tbody>
+                        @for (int idx = 0; idx < Model.Terms.Count; idx++)
+                        {
+                            <tr>
+                                <td width="1%" valign="top">@(idx + 1). </td>
+                                <td>@Model.Terms[idx].name </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

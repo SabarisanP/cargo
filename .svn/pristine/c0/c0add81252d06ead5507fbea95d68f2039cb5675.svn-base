@@ -1,0 +1,93 @@
+<table class="" width="95%">
+    <tr>
+    <td colspan="4" align="left"><span class="bold"><b>Date :<prev>  </prev> {$toDate}</b></span></td>
+    <td colspan="5" align="left"><span class="bold">Table Chart Pending List</span></td>
+       
+    </tr>
+</table>
+
+<div class="overflow-x-auto">
+    <table id="dt_adv_booking_report_table" class="table table-bordered ">
+   <thead>
+   <tr class="success">
+   <td>SL. NO</td>
+   <td>Party Name</td>
+   <td>Bill Submission</td>
+   <td>Bill No</td>
+   <td>Bill Date</td>
+   <td>No of Bill</td>
+   <td>Bill Amt</td>
+   <td>Monthly Total</td>
+   <td>Grand Total</td>
+   </tr>
+   </thead>
+   <tbody class="body_table">
+   {foreach $pendingList as $key => $row}
+       <tr>
+           <td colspan="9" align="center"><b>{$key}<b></td>
+       </tr>
+       {assign var="index1" value=0}
+      
+       {foreach $row as $singleOrg => $value}
+           {assign var="totalIncome" value=0}
+           {assign var="index1" value=$index1 + 1}
+           {assign var="index2" value=0}
+           {assign var="index3" value=0}
+           {assign var= "totalIncomeIndex" value = 0}
+           {assign var= "totalMonthlyIndex" value = 0}
+           {foreach $value as $key2 => $Value}
+            {assign var= "totalIncomeIndex" value =($totalIncomeIndex+($Value|count))}
+            {/foreach}
+           {foreach $value as $key2 => $Value}
+               {assign var="monthlyIncome" value=0}
+               {assign var="index2" value=$index2 + 1}
+              
+               {assign var= "totalMonthlyIndex" value =($totalMonthlyIndex+($Value|count))}
+               {if $index2 == 1}
+                   <tr>
+                       <td><b></b></td>
+                       <td colspan="3" align="center"><b>{$Value[0]->vendor_name}</b></td>
+                       <td colspan="3" align="center"><b>{$Value[0]->vendor_contact}</b></td>
+                       <td colspan="3" align="center"><b>{$Value[0]->vendor_email}</b></td>
+                   </tr>
+               {/if}
+               
+          
+               {foreach $Value as $innerValue}
+                   {assign var="monthlyIncome" value=$monthlyIncome + $innerValue->transaction_amount}
+                   {assign var="totalIncome" value=$totalIncome + $innerValue->transaction_amount}
+                   {assign var="index3" value=$index3 + 1}
+                   <tr>
+                       <td>{$index3}</td>
+                       <td nowrap>{$innerValue->from_organization_name} - {$innerValue->to_organization_name}  / {$innerValue->payment_type_name}</td>
+                       <td nowrap>{$innerValue->submitted_at|strtotime|date_format:"%d-%b-%Y"}</td>
+                       <td nowrap>{$innerValue->invoice_number}</td>
+                       <td nowrap>{$innerValue->transaction_start_date|strtotime|date_format:"%d-%b-%Y"}</td>
+                       <td nowrap>{$innerValue->cargo_count}</td>
+                       <td nowrap>{$innerValue->transaction_amount}</td>
+                       <td nowrap>{($index3 == $totalMonthlyIndex) ? $monthlyIncome : ''}</td>
+                       <td nowrap>{($index3 == $totalIncomeIndex) ? $totalIncome : ''}</td>
+                   </tr>
+               {/foreach}
+           {/foreach}
+       {/foreach}
+   {/foreach}
+</tbody>
+    </table>
+</div>
+
+{* <div class="clear_fix_both text-right">
+    <div class="btn-group btn-group-sm">
+        <button class="btn btn-default" onclick="exportCargoDeliveryExcel()"><i
+                class="fa fa-download fa-lg"></i>Excel</button>
+        <button class="btn btn-default" onclick="window.print();"><i class="fa fa-print fa-lg"></i> Print</button>
+    </div>
+</div> *}
+
+<script>
+    $('[data-toggle="popover"]').popover({
+        placement: 'top',
+        html: true,
+        trigger: 'hover'
+    });
+</script>

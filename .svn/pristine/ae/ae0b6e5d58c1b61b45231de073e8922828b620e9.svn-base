@@ -1,0 +1,10 @@
+#navigation #brand {
+    margin: 0 5px 0 5px!important;
+    padding: 9px 18px!important;
+    border-radius: 4px;
+    background: linear-gradient(0deg, rgba(141,207,91,1) 0%, rgba(255,255,255,1) 18%, rgba(255,255,255,1) 82%, rgba(253,97,2,1) 100%);
+}
+
+#navigation #brand img {
+    height: 34px;
+}

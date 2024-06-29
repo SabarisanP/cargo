@@ -1,0 +1,43 @@
+--- application/controllers/import.php
++++ application/controllers/import.php
+@@ -33,8 +32,13 @@
+         $import_fields_map['v_total_freight'] = $column_names[10];
+         $import_fields_map['v_payment_type'] = $column_names[11];
+         $import_fields_map['v_invoice_value'] = $column_names[12];
+-        $import_fields_map['v_articles'] = $column_names[13];
+-        $import_fields_map['v_remarks'] = $column_names[14];
++        $import_fields_map['v_door_pickup'] = $column_names[13];
++        $import_fields_map['v_door_pickup_charges'] = $column_names[14];
++        $import_fields_map['v_door_delivery'] = $column_names[15];
++        $import_fields_map['v_door_delivery_charges'] = $column_names[16];
++        $import_fields_map['v_loading_charges'] = $column_names[17];
++        $import_fields_map['v_articles'] = $column_names[18];
++        $import_fields_map['v_remarks'] = $column_names[19];
+         
+         // $import_fields_map['citytravels'] = array(
+         //     "v_lrno" => "LR No.",
+@@ -198,10 +202,10 @@
+                     'cargoItem' => array('code' => '', 'name' => $lr['v_articles']),
+                     'fare' => $lr['v_total_freight'],
+                     'itemCount' => $lr['v_article_count'],
+-                    'handlingChargeAmount' => 0,
+-                    'unloadingChargeAmount' => 0,
++                    'handlingChargeAmount' => $lr['v_loading_charges'],
++                    'unloadingChargeAmount' => "0",
+                     'unit' => array('code' => 'NPPKG'),
+-                    'unitValue' => 0,
++                    'unitValue' => "0",
+                     'actualUnitValue' => $lr['v_actual_weight'],
+                     'serviceTax' => 0
+                 );
+@@ -280,8 +284,8 @@
+                 'paymentAmount' => $paymentAmount,
+                 'itemDetails' => $articles ?: [],
+                 'paymentType' => array('code' => $excel_import_payment_status[$paymentType]),
+-                'pickupHandlingAmount' => 0,
+-                'deliveryHandlingAmount' => 0,
++                'pickupHandlingAmount' => (double)$lr['v_door_pickup_charges'],
++                'deliveryHandlingAmount' => (double)$lr['v_door_delivery_charges'],
+                 'fromCustomerGST' => '',
+                 'toCustomerGST' => '',
+                 'serviceCharge' => 0,

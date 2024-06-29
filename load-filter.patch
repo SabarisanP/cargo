@@ -1,0 +1,916 @@
+Index: application/views/site/cargo/add-ogplv3.tpl
+===================================================================
+--- application/views/site/cargo/add-ogplv3.tpl	(revision 5309)
++++ application/views/site/cargo/add-ogplv3.tpl	(working copy)
+@@ -195,7 +195,7 @@
+                                                             <div class="form-group">
+                                                                 <label for="ogpl-from" class="req">From Station</label>
+                                                                 <div class="input-group col-md-12">
+-                                                                    <select id="ogpl-from" class="form-control OTFD-field" onchange="setHubLoadStations(this); getNextOGPLSequence();setLocalTransitStations();">
++                                                                    <select id="ogpl-from" class="form-control OTFD-field"  onclick="stationfilter1();" onchange="setHubLoadStations(this); getNextOGPLSequence();setLocalTransitStations();">
+                                                                         <option value="" selected="">Select From</option>
+                                                                         {foreach item=station from=$stations}
+                                                                             <option value="{$station.code}" data-stationcode="{$station.code}">{$station.name}</option>
+@@ -209,15 +209,43 @@
+                                                             <div class="form-group">
+                                                                 <label for="ogpl-to" class="req">To Station</label>
+                                                                 <div class="input-group col-md-12">
+-                                                                    <select id="ogpl-to" class="form-control OTFD-field" onchange="setHubLoadStations(this);setHubLoadZones(this);">
++                                                                    <select id="ogpl-to" class="form-control OTFD-field" onclick="stationfilter2();" onchange="setHubLoadStations(this);setHubLoadZones(this);">
+                                                                         <option value="" selected="">Select To</option>
+                                                                         {foreach item=station from=$stations}
+-                                                                            <option value="{$station.code}">{$station.name}</option>
++                                                                            <option value="{$station.code}" data-stationcode="{$station.code}">{$station.name}</option>
+                                                                         {/foreach}
+                                                                     </select>
+                                                                 </div>
+                                                             </div>
+                                                         </div>
++                                                        <div class="col-md-6" data-transit-field="TRNT">
++                                                            <div class="form-group">
++                                                                <label for="ogpl-from-branch" class="req">From organization</label>
++                                                                <div class="input-group col-md-12">
++                                                                    <select id="ogpl-from-branch" name="organizationCode" class="form-control">
++                                                                        <option value="NA" data-brachcode="NA">All Branch</option>
++                                                                        {foreach item=branch from=$branches key=bcode}
++                                                                            <option value="{$branch->code}" data-brachcode="{$branch->station->code}">{$branch->name}</option>
++                                                                        {/foreach}
++                                                                    </select>
++                                                                </div>
++                                                            </div>
++                                                        </div>
++
++                                                        <div class="col-md-6" data-transit-field="TRNT">
++                                                            <div class="form-group">
++                                                                <label for="ogpl-to-branch" class="req">To organization</label>
++                                                                <div class="input-group col-md-12">
++                                                                    <select id="ogpl-to-branch" name="organizationCode" class="form-control">
++                                                                        <option value="NA" data-brachcode="NA">All Branch</option>
++                                                                        {foreach item=branch from=$branches key=bcode}
++                                                                            <option value="{$branch->code}" data-brachcode="{$branch->station->code}">{$branch->name}</option>
++                                                                        {/foreach}
++                                                                    </select>
++                                                                </div>
++                                                            </div>
++                                                        </div>
++
+                                                         <div class="col-md-6">
+                                                             <div class="form-group">
+                                                                 <label for="ogpl-departuretime">Departure Time</label>
+@@ -435,7 +463,8 @@
+                                                 <span class="f-16" id="edit-ogpl-from"></span> - <span class="f-16" id="edit-ogpl-to"></span>
+                                             </div>
+                                             <div class="col-md-7" style="line-height: 25px;">
+-                                                <b>From :</b> <span id="edit-ogpl-sub-from"></span> &nbsp;&nbsp;<b>To :</b> <span id="edit-ogpl-sub-to"></span><br>
++                                                <b>From Station:</b> <span id="edit-ogpl-sub-from"></span> &nbsp;&nbsp;<b>To Station:</b> <span id="edit-ogpl-sub-to"></span><br>
++                                                <b>From Organization:</b> <span id="edit-ogpl-branch-from"></span> &nbsp;&nbsp;<b>To Organization:</b> <span id="edit-ogpl-branch-to"></span><br>
+                                                 <b>Driver :</b> <span id="edit-ogpl-driver"></span> &nbsp;&nbsp;<b>Driver 2 :</b> <span id="edit-ogpl-driver2"></span><br>
+                                                 <b>Supervisor :</b> <span id="edit-ogpl-supervisor"></span><br>
+                                                 <b>Via :</b> <span id="edit-ogpl-via"></span><br>
+@@ -670,14 +699,14 @@
+                                             {* setting based strip start module *}
+                                             {if $cargo_setting->transitOdometerModelCode == "ORGDTN"}  
+                                                 {if $ogpl->fromStation->code == $login_station }
+-                                                <button class="btn btn-warning {if !$ogpl || (isset($odoDetails) && $odoDetails->startOdometer > 0) || (!$odoDetails && $show_end_odo == 0)}hide{/if}" id="start-transit-btn" type="button" onclick="showStartTripDialog(true);">Start Trip</button>
++                                                <button class="btn btn-warning {if !$ogpl || (isset($odoDetails) && $odoDetails->startOdometer > 0) || (!$odoDetails && $show_end_odo == 0)}hide{/if}" id="start-transit-btn" type="button" onclick="openOdometerDialog();">Start Trip</button>
+                                                {else}
+                                                    {if $odoDetails->fromOdometerRange > 0}
+-                                                       <button class="btn btn-warning {if !$ogpl || (isset($odoDetails) && $odoDetails->startOdometer > 0) || (!$odoDetails && $show_end_odo == 0) }hide{/if}" id="start-transit-btn" type="button" onclick="showStartTripDialog(true);">Start Trip</button>
++                                                       <button class="btn btn-warning {if !$ogpl || (isset($odoDetails) && $odoDetails->startOdometer > 0) || (!$odoDetails && $show_end_odo == 0) }hide{/if}" id="start-transit-btn" type="button" onclick="openOdometerDialog();">Start Trip</button>
+                                                    {/if}
+                                                {/if}
+                                             {else}
+-                                                <button class="btn btn-warning {if !$ogpl || (isset($odoDetails) && $odoDetails->startOdometer > 0) || (!$odoDetails && $show_end_odo == 0)}hide{/if}" id="start-transit-btn" type="button" onclick="showStartTripDialog(true);">Start Trip</button>
++                                                <button class="btn btn-warning {if !$ogpl || (isset($odoDetails) && $odoDetails->startOdometer > 0) || (!$odoDetails && $show_end_odo == 0)}hide{/if}" id="start-transit-btn" type="button" onclick="openOdometerDialog();">Start Trip</button>
+                                             {/if}
+                                             
+ 
+@@ -843,338 +872,6 @@
+     </div>
+ </div>
+ 
+-{* start trip *}
+-<div id="start-trip-dialog" style="display: none">
+-    <div class="clearfix">
+-        <a href="javascript:;" class="pull-right" onclick="hideStartTripDialog();"><i class="fa fa-times-circle fa-2x"></i></a>
+-    </div>
+-    <div id="start-trip-panel" class="clearfix" style="padding: 10px 5px;max-height: 600px;overflow-x: hidden;overflow-y: auto;">
+-        <form onsubmit="return false;">
+-        <input type="hidden" id="allowLoad">
+-            <div class="row">
+-                <div class="col-md-4 text-center">
+-                    <img src="assets/img/start-trip.png" width="65%">
+-                </div>
+-                <div class="col-md-4 text-center">
+-                    <h4 class="bold">Departure Time</h4>
+-                    <h5 id="trip-start-date"></h5>
+-                    <h4 id="trip-start-time"></h4>
+-                </div>
+-                <div class="col-md-4 text-center">
+-                    <h5 class="bold">Last odometer Reading</h5>
+-                    <h5><span class="last-odometer"></span> Km</h5>
+-                </div>
+-                <div class="clearfix"></div>
+-
+-                <div class="col-md-12">
+-                    <label class="h5">Fill The Following Details To Start Trip</label>
+-                    <h6 class="bold">Odometer</h6>
+-                    <div class="row">
+-                        <div class="col-md-4">
+-                            <label class="control-label req" for="">Odometer</label>
+-                            <input type="number" id="start-trip-odo" class="form-control no-spin" placeholder="Odometer">
+-                        </div>
+-                        <div class="col-md-4 p_l_n">
+-                            <div class="input-group col-md-12">
+-                                <label class="control-label" for="">Supervisor</label>
+-                                <select id="start-trip-supervisor" class="form-control">
+-                                    <option value="" selected>Select Supervisor</option>
+-                                    {foreach item=row from=$branchContact}
+-                                        {if $row->category->code == 'SPVSR'}
+-                                            <option value="{$row->code}">{$row->name}</option>                                    
+-                                        {/if}
+-                                    {/foreach}
+-                                </select>
+-                            </div>
+-                        </div>
+-                    </div>
+-
+-                    <div id="start-trip-expense">
+-                        <h6 class="bold">Payments</h6>
+-                        <div class="row">
+-                        {if  $namespace === "seenutransport" && isset($ownershipTypeing['OWN'])}
+-                            <div class="col-md-4">
+-                                <label class="control-label" for="">Advance Amount</label>
+-                                <input type="number" id="start-trip-advance-amount" class="form-control no-spin" placeholder="Advance Amount">
+-                            </div>
+-                            <div class="col-md-4">
+-                                <div class="input-group col-md-12">
+-                                    <label class="control-label" for="">Payment Mode</label>
+-                                    <select id="start-trip-adv-paymode" class="form-control" onchange="setStartTripTransactionMode();">
+-                                        <option value="" selected>Payment Mode</option>
+-                                        {foreach name=o key=k item=name from=$f_t_mode}
+-                                            <option value="{$k}">{$name}</option>
+-                                        {/foreach} 
+-                                    </select>
+-                                </div>
+-                            </div>
+-                            <div class="col-md-4 p_l_n">
+-                                <label class="control-label" for="">Payment By</label>
+-                                <select id="start-trip-adv-payby" class="form-control">
+-                                    <option value="" selected>Payment By</option>
+-                                    {foreach from=$contact item=con key=key}
+-                                        {foreach from=$con item=val}
+-                                            {if $val->contactCategory->actionCode == 'BRCH'}
+-                                                <option value="{$val->code}">{$val->name}</option>
+-                                            {/if}
+-                                        {/foreach}
+-                                    {/foreach}
+-                                </select>
+-                            </div>
+-                        {elseif  $namespace === "seenutransport" && isset($ownershipTypeing['HIRE'])}
+-                            <div id="start-trip-hiring-amt">
+-                                <div class="col-md-4">
+-                                    <label class="control-label" for="">Hiring Amount</label>
+-                                    <input type="number" class="form-control" id="start-trip-hire-amount" placeholder="Hiring Amount" step="any">
+-                                </div>
+-                                <div class="clearfix"></div><br>
+-                            </div>
+-
+-                            <div class="col-md-4">
+-                                <label class="control-label" for="">Advance Amount</label>
+-                                <input type="number" id="start-trip-advance-amount" class="form-control no-spin" placeholder="Advance Amount">
+-                            </div>
+-                            <div class="col-md-4">
+-                                <div class="input-group col-md-12">
+-                                    <label class="control-label" for="">Payment Mode</label>
+-                                    <select id="start-trip-adv-paymode" class="form-control" onchange="setStartTripTransactionMode();">
+-                                        <option value="" selected>Payment Mode</option>
+-                                        {foreach name=o key=k item=name from=$f_t_mode}
+-                                            <option value="{$k}">{$name}</option>
+-                                        {/foreach} 
+-                                    </select>
+-                                </div>
+-                            </div>
+-                            <div class="col-md-4 p_l_n">
+-                                <label class="control-label" for="">Payment By</label>
+-                                <select id="start-trip-adv-payby" class="form-control">
+-                                    <option value="" selected>Payment By</option>
+-                                    {foreach from=$contact item=con key=key}
+-                                        {foreach from=$con item=val}
+-                                            {if $val->contactCategory->actionCode == 'BRCH'}
+-                                                <option value="{$val->code}">{$val->name}</option>
+-                                            {/if}
+-                                        {/foreach}
+-                                    {/foreach}
+-                                </select>
+-                            </div>
+-                        {elseif  $namespace === "seenutransport" && isset($ownershipTypeing['ATCH'])}
+-                            
+-                            <div class="col-md-4">
+-                                <label class="control-label" for="">Advance Amount</label>
+-                                <input type="number" id="start-trip-advance-amount" class="form-control no-spin" placeholder="Advance Amount">
+-                            </div>
+-                            <div class="col-md-4">
+-                                <div class="input-group col-md-12">
+-                                    <label class="control-label" for="">Payment Mode</label>
+-                                    <select id="start-trip-adv-paymode" class="form-control" onchange="setStartTripTransactionMode();">
+-                                        <option value="" selected>Payment Mode</option>
+-                                        {foreach name=o key=k item=name from=$f_t_mode}
+-                                            <option value="{$k}">{$name}</option>
+-                                        {/foreach} 
+-                                    </select>
+-                                </div>
+-                            </div>
+-                            <div class="col-md-4 p_l_n">
+-                                <label class="control-label" for="">Payment By</label>
+-                                <select id="start-trip-adv-payby" class="form-control">
+-                                    <option value="" selected>Payment By</option>
+-                                    {foreach from=$contact item=con key=key}
+-                                        {foreach from=$con item=val}
+-                                            {if $val->contactCategory->actionCode == 'BRCH'}
+-                                                <option value="{$val->code}">{$val->name}</option>
+-                                            {/if}
+-                                        {/foreach}
+-                                    {/foreach}
+-                                </select>
+-                            </div>
+-                        {else}
+-                            <div id="start-trip-hiring-amt">
+-                                <div class="col-md-4">
+-                                    <label class="control-label" for="">Hiring Amount</label>
+-                                    <input type="number" class="form-control" id="start-trip-hire-amount" placeholder="Hiring Amount" step="any">
+-                                </div>
+-                                <div class="clearfix"></div><br>
+-                            </div>
+-                            <div class="col-md-4">
+-                                <label class="control-label" for="">Advance Amount</label>
+-                                <input type="number" id="start-trip-advance-amount" class="form-control no-spin" placeholder="Advance Amount">
+-                            </div>
+-                            <div class="col-md-4">
+-                                <div class="input-group col-md-12">
+-                                    <label class="control-label" for="">Payment Mode</label>
+-                                    <select id="start-trip-adv-paymode" class="form-control" onchange="setStartTripTransactionMode();">
+-                                        <option value="" selected>Payment Mode</option>
+-                                        {foreach name=o key=k item=name from=$f_t_mode}
+-                                            <option value="{$k}">{$name}</option>
+-                                        {/foreach} 
+-                                    </select>
+-                                </div>
+-                            </div>
+-                            <div class="col-md-4 p_l_n">
+-                                <label class="control-label" for="">Payment By</label>
+-                                <select id="start-trip-adv-payby" class="form-control">
+-                                    <option value="" selected>Payment By</option>
+-                                    {foreach from=$contact item=con key=key}
+-                                        {foreach from=$con item=val}
+-                                            {if $val->contactCategory->actionCode == 'BRCH'}
+-                                                <option value="{$val->code}">{$val->name}</option>
+-                                            {/if}
+-                                        {/foreach}
+-                                    {/foreach}
+-                                </select>
+-                            </div>
+-                        {/if}
+-                            
+-                            <div class="clearfix"></div><br>
+-                            <div class="hide" id="start-trip-adv-upi-mode-panel">
+-                                <div class="col-md-4">
+-                                    <div class="form-group">
+-                                        <label for="start-trip-adv-upi-orgbank">Organization Bank</label>
+-                                        <select class="form-control" id="start-trip-adv-upi-orgbank">
+-                                            <option value="">Select Organization Bank</option>
+-                                            {foreach from=$bankdetail item=val}
+-                                                <option value="{$val->code}">{$val->name}, Acc No: {$val->accountNumber}</option>
+-                                            {/foreach}
+-                                        </select>
+-                                    </div>
+-                                </div>
+-                                <div class="col-md-4">
+-                                    <div class="form-group">
+-                                        <label for="start-trip-adv-upi-id">UPI ID</label>
+-                                        <input type="text" class="form-control" id="start-trip-adv-upi-id" maxlength="250" placeholder="UPI ID" autocomplete="off">
+-                                    </div>
+-                                </div>
+-                                <div class="col-md-4">
+-                                    <div class="form-group">
+-                                        <label for="start-trip-adv-upi-details">Ref. #</label>
+-                                        <input type="text" class="form-control" id="start-trip-adv-upi-details" placeholder="Ref. #" autocomplete="off">
+-                                    </div>
+-                                </div>
+-                            </div>
+-
+-                            {* Netbanking *}
+-                            <div class="hide" id="start-trip-adv-netbanking-mode-panel">
+-                                <div class="col-md-6">
+-                                    <div class="form-group">
+-                                        <label for="start-trip-adv-netbanking-orgbank">Organization Bank</label>
+-                                        <select class="form-control" id="start-trip-adv-netbanking-orgbank">
+-                                            <option value="">Select Organization Bank</option>
+-                                            {foreach from=$bankdetail item=val}
+-                                                <option value="{$val->code}">{$val->name}, Acc No: {$val->accountNumber}</option>
+-                                            {/foreach}
+-                                        </select>
+-                                    </div>
+-                                </div>
+-                                <div class="col-md-6">
+-                                    <div class="form-group">
+-                                        <label for="start-trip-adv-netbanking-accholder">Account Holder Name</label>
+-                                        <input type="text" class="form-control" id="start-trip-adv-netbanking-accholder" maxlength="250" placeholder="Account Holder Name" autocomplete="off">
+-                                    </div>
+-                                </div>
+-                                <div class="col-md-6">
+-                                    <div class="form-group" id="start-trip-adv-netbanking-bankname-div">
+-                                        <label for="start-trip-adv-netbanking-bankname">Bank Name</label>
+-                                        <input type="text" class="form-control" id="start-trip-adv-netbanking-bankname" maxlength="120" placeholder="Bank Name" autocomplete="off">
+-                                    </div>
+-                                </div>
+-                                <div class="col-md-6">
+-                                    <div class="form-group">
+-                                        <label for="start-trip-adv-netbanking-details">Ref. #</label>
+-                                        <input type="text" class="form-control" id="start-trip-adv-netbanking-details" placeholder="Ref. #" autocomplete="off">
+-                                    </div>
+-                                </div>
+-                            </div>
+-
+-                            {* Cheque *}
+-                            <div class="hide" id="start-trip-adv-cheque-mode-panel">
+-                                <div class="col-md-3">
+-                                    <div class="form-group">
+-                                        <label for="start-trip-adv-cheque-payer">Payer Details</label>
+-                                        <input type="text" class="form-control" id="start-trip-adv-cheque-payer" maxlength="250" placeholder="Payer Details" autocomplete="off">
+-                                    </div>
+-                                </div>
+-                                <div class="col-md-3">
+-                                    <div class="form-group">
+-                                        <label for="start-trip-adv-cheque-no">Cheque No</label>
+-                                        <input type="text" class="form-control" id="start-trip-adv-cheque-no" maxlength="60" placeholder="Cheque No" autocomplete="off">
+-                                    </div>
+-                                </div>
+-                                <div class="col-md-3">
+-                                    <div class="form-group">
+-                                        <label for="start-trip-adv-cheque-date">Cheque Date</label>
+-                                        <input type="text" class="form-control" id="start-trip-adv-cheque-date" maxlength="20" placeholder="Cheque Date" autocomplete="off" readonly>
+-                                    </div>
+-                                </div>
+-                                <div class="col-md-3">
+-                                    <div class="form-group">
+-                                        <label for="start-trip-adv-cheque-bankcity">Bank City</label>
+-                                        <input type="text" class="form-control" id="start-trip-adv-cheque-bankcity" maxlength="90" placeholder="Bank City" autocomplete="off">
+-                                    </div>
+-                                </div>
+-                                <div class="col-md-6">
+-                                    <div class="form-group" id="start-trip-adv-cheque-bankname-div">
+-                                        <label for="start-trip-adv-cheque-bankname">Bank Name</label>
+-                                        <input type="text" class="form-control" id="start-trip-adv-cheque-bankname" maxlength="120" placeholder="Bank Name" autocomplete="off">
+-                                    </div>
+-                                </div>
+-                                <div class="col-md-6">
+-                                    <div class="form-group">
+-                                        <label for="start-trip-adv-cheque-remarks">Remarks</label>
+-                                        <input type="text" class="form-control" placeholder="Remarks" id="start-trip-adv-cheque-remarks" data-mask="englishonly"/>
+-                                    </div>
+-                                </div>
+-                            </div>
+-                        </div>
+-
+-                        <h6 class="bold">Fuel Expense</h6>
+-                        <div class="row">
+-                            <div class="col-md-2">
+-                                <label class="control-label" for="">Fuel Litres</label>
+-                                <input type="number" id="start-trip-fuel-litres" class="form-control no-spin" placeholder="Fuel Litres">
+-                            </div>
+-                            <div class="col-md-2">
+-                                <label class="control-label" for="">Fuel Rate / Liter</label>
+-                                <input type="number" class="form-control" id="start-trip-fuel-rate" placeholder="Fuel Rate / Liter" step="any">
+-                            </div>
+-                            <div class="col-md-3">
+-                                <div class="input-group col-md-12">
+-                                    <label class="control-label" for="">Vendor</label>
+-                                    <select id="start-trip-fuel-vendor" class="form-control">
+-                                        <option value="" selected>Select Vendor</option>
+-                                        {foreach item=row from=$vendors} 
+-                                            {if $row->contactCategory->actionCode == 'RAC'}
+-                                                <option value="{$row->code}">{$row->name}</option> 
+-                                            {/if}
+-                                        {/foreach}
+-                                    </select>
+-                                </div>
+-                            </div>
+-                            <div class="col-md-3">
+-                                <div class="input-group col-md-12">
+-                                    <label for="start-trip-fuel-payment-mode" class="req">Payment Mode</label>
+-                                    <select id="start-trip-fuel-payment-mode" class="form-control">
+-                                        <option value="CASH">Cash Payment</option> 
+-                                        <option value="CRDT">Credit Payment</option> 
+-                                    </select>
+-                                </div>
+-                            </div>
+-                            <div class="col-md-2">
+-                                <label class="control-label" for="">Fuel Coupon</label>
+-                                <input type="text" class="form-control" id="start-trip-fuel-coupon" placeholder="Fuel Coupon">
+-                            </div>
+-                        </div>
+-                    </div>
+-                </div>
+-                <div class="col-md-12 text-center"><br>
+-                    <div id="start-trip-action-state"></div>
+-                    <button type="submit" class="btn btn-warning col-md-3" id="start-trip-btn" onclick="startTransitV3Trip();" style="float: none;">Start Trip</button>
+-                </div>
+-            </div>
+-        </form>
+-    </div>
+-</div>
+-
+ <script id="vehicle-select-tpl" type="text/html">
+     <div class="row">
+         <div class="col-xs-7">
+@@ -1330,8 +1027,8 @@
+     var splittedLRList = [];
+ 
+     function checkOdoUpdation(){
+-        if(startOdoUpdated === 0){
+-            showStartTripDialog(true);
++        if(startOdoUpdated == 0){
++            openOdometerDialog();
+             return false;
+         }else{
+             true;
+@@ -1370,7 +1067,7 @@
+                 
+                 response(driverSource);
+             }
+-
++            
+             var filterSupervisorSource = function (request, response) {
+                 var query = request.term.toLowerCase();
+ 
+@@ -1406,6 +1103,8 @@
+             $('#ogpl-tpl').select2();
+             $('#ogpl-from').select2();
+             $('#ogpl-to').select2();
++            $('#ogpl-from-branch').select2();
++            $('#ogpl-to-branch').select2();
+             $('#start-trip-supervisor').select2();
+             $('#start-trip-adv-paymode').select2();
+             $('#start-trip-adv-payby').select2();
+@@ -1627,6 +1326,29 @@
+             }).select2('val', []).trigger('change');
+         }
+ 
++        var ogpl_branch_list_from = $('#ogpl-from-branch option');
++        var ogpl_branch_list_to = $('#ogpl-to-branch option');
++        var emptyOrgOption = '<option value="NA" data-brachcode="NA">All Branch</option>';
++        function stationfilter1(){
++            var ogpl_station_from = $('#ogpl-from option:selected').data('stationcode');
++            var ogpl_station_from_arr = ogpl_station_from.split(',');
++            $('#ogpl-from-branch').html(function() {
++                return ogpl_branch_list_from.filter(function() {
++                    return $.inArray($(this).data('brachcode'), ogpl_station_from_arr) !== -1 || ($('#ogpl-from').val() == 'NA' && $(this).val() != 'NA');
++                });
++            }).prepend(emptyOrgOption).val('NA').trigger('change');
++        }
++
++        function stationfilter2(){
++            var ogpl_station_to = $('#ogpl-to option:selected').data('stationcode');
++            var ogpl_station_to_arr = ogpl_station_to.split(',');
++            $('#ogpl-to-branch').html(function() {
++                return ogpl_branch_list_to.filter(function() {
++                    return $.inArray($(this).data('brachcode'), ogpl_station_to_arr) !== -1 || ($('#ogpl-to').val() == 'NA' && $(this).val() != 'NA');
++                });
++            }).prepend(emptyOrgOption).val('NA').trigger('change');
++        }
++
+         function setViaStations() {
+             if ($('#ogpl-via-zones').val() == null) {
+                 $('#ogpl-via').val('').trigger('change');
+@@ -1690,7 +1412,9 @@
+ 
+             $('#ogpl-from').val(OGPLEdit.fromStation.code).trigger('change');
+             $('#ogpl-to').val(OGPLEdit.toStation.code).trigger('change');
+-                        
++            $('#ogpl-from-branch').val(OGPLEdit.fromOrganization.code).trigger('change');
++            $('#ogpl-to-branch').val(OGPLEdit.toOrganization.code).trigger('change');
++
+             // Direct Load
+             if (OGPLEdit.viaStations.length > 0) {
+                 $('#transit-type [name="transit-type"][value="TRNT"]').prop('checked', true).trigger('change');
+@@ -1846,8 +1570,11 @@
+ 
+             $('#edit-ogpl-from').text(OGPLEdit.fromStation.name);
+             $('#edit-ogpl-to').text(OGPLEdit.toStation.name);
++   
+             $('#edit-ogpl-sub-from').text(OGPLEdit.fromStation.name);
+             $('#edit-ogpl-sub-to').text(OGPLEdit.toStation.name);
++            $('#edit-ogpl-branch-from').text(OGPLEdit.fromOrganization.name);
++            $('#edit-ogpl-branch-to').text(OGPLEdit.toOrganization.name);
+ 
+             $('#edit-ogpl-vehicle').text(OGPLEdit.busVehicle.registationNumber);
+             $('#edit-ogpl-driver').text(OGPLEdit.vehicleDriver.name);
+@@ -2534,17 +2261,20 @@
+             data.name = (data.fromStation.name).toUpperCase().substring(0, 4) +' TO '+ (data.toStation.name).toUpperCase().substring(0, 4);
+             
+             data.fromOrganization = {};
+-            data.fromOrganization.code = user_login_branch;
++            data.fromOrganization.code =$('#ogpl-from-branch').val();
++            data.fromOrganization.name =$('#ogpl-from-branch option:selected').text();
+ 
+             data.toOrganization = {};
+-            data.toOrganization.code = user_login_branch;
+-
++            data.toOrganization.code = $('#ogpl-to-branch').val();
++            data.toOrganization.name =$('#ogpl-to-branch option:selected').text();
+             if(allowLoading == 'LOAD'){
+                 var selectedOrg = $('#local-via-branches').val(); 
+                 var finalEl = selectedOrg[selectedOrg.length - 1];
+-                data.toOrganization.code = finalEl;
++                data.toOrganization.code =$('#ogpl-to-branch').val();
++                data.toOrganization.name =$('#ogpl-to-branch option:selected').text();
+             }else{
+-                data.toOrganization.code = user_login_branch;
++                data.toOrganization.code = $('#ogpl-to-branch').val();
++                data.toOrganization.name =$('#ogpl-to-branch option:selected').text();
+             }
+             
+             data.departureMinutes = Number($('#ogpl-departuretime').val());
+@@ -2768,7 +2498,7 @@
+                             if(loadtype == 'EMPTY_LOAD' && transType == 'INTRNT' ){ 
+                                 showStartTripDialog(false); //don't allow to direct or refres the page.
+                              }else{
+-                                showStartTripDialog(true); //allow to redirect
++                                openOdometerDialog(); //allow to redirect
+                              }
+                         } else {
+                             loading_overlay.update({
+@@ -2798,6 +2528,8 @@
+                 $('#edit-ogpl-sub-from').text(OGPLFormData.fromStation.name);
+             }
+             $('#edit-ogpl-to').text(OGPLFormData.toStation.name);
++            $('#edit-ogpl-branch-from').text(OGPLFormData.fromOrganization.name);
++            $('#edit-ogpl-branch-to').text(OGPLFormData.toOrganization.name);
+             $('#edit-ogpl-sub-to').text(OGPLFormData.toStation.name);
+             $('#edit-ogpl-vehicle').text(data.busVehicle.registationNumber);
+             $('#edit-ogpl-driver').text(OGPLFormData.vehicleDriver.name);
+@@ -4948,9 +4680,9 @@
+         //important
+         function saveTransitV3(action) {
+             var transitList = [];
+-                $('#transit-type [name="transit-type"]:checked').each(function() {
+-                    transitList.push($(this).val());
+-                });
++            $('#transit-type [name="transit-type"]:checked').each(function() {
++                transitList.push($(this).val());
++            });
+             var is_emtpy_with_load = transitList.includes('INTRNT') &&  transitList.includes('OTFD');
+             var onlyEmptyLoad = transitList.includes('INTRNT') && !transitList.includes('OTFD');
+             var activityType = [];
+@@ -4994,7 +4726,7 @@
+                                     errors.push(state.code + ' - ' + state.name);
+                                 }
+                             });
+-
++                            
+                             if (errors.length) {
+                                 $('#save-transitv3-action-state').removeClass('alert-success').addClass('alert-danger')
+                                 $('#save-transitv3-action-state').html(errors.join('<br/>'));
+@@ -5017,6 +4749,7 @@
+                                     
+                                     OGPLFormData.code = response.OGPLCode;
+                                     $('#hid-ogpl-code').val(response.OGPLCode)
++                                    
+                                 }, 3000);
+                             }
+                         } else {
+@@ -5032,6 +4765,11 @@
+                             $('#save-transitv3-action-state').removeClass('alert-success').addClass('alert-danger')
+                             $('#save-transitv3-action-state').html(response.errorDesc);
+                         }
++                        window.setTimeout(function () {
++                            if(checkOdometerUp()){
++                                openOdometerDialog();
++                            }
++                        }, 3000);
+                     }
+                 });
+             }else{
+@@ -5078,297 +4816,6 @@
+             $('#start-trip-dialog').hide();
+         }
+ 
+-        function startTransitV3Trip() {
+-            var allowLoading = $('#allowLoad').val();
+-           
+-            var data = {}, err = 0;
+-            data.action = 'DEPARTURE';
+-            data.transitCode = OGPLFormData.code;
+-            data.transitCargo = {};
+-            data.transitCargo.code = OGPLFormData.code;
+-            data.fromOrganization = {};
+-            data.fromOrganization.code = user_login_branch;
+-            data.startOdometer = Number($('#start-trip-odo').val());
+-            data.departureAt = moment().format('YYYY-MM-DD HH:mm:ss');
+-            data.fromOrganizationContact = {};
+-            data.fromOrganizationContact.code = $('#start-trip-supervisor').val();
+-
+-            $('.inp_error').removeClass('inp_error');
+-            if (isNaN(data.startOdometer) || data.startOdometer < 0 || data.startOdometer == '') {
+-                $('#start-trip-odo').addClass('inp_error');
+-                err++;
+-            }
+-            var vehicle = _.find(OGPLVehicles, o => o.code == OGPLFormData.busVehicle.code) || {};
+-            if (vehicle && vehicle.lastOdometer > 0 && data.startOdometer < vehicle.lastOdometer) {
+-                $('#start-trip-action-state').removeClass('alert-success hide').addClass('alert alert-danger').show();
+-                $('#start-trip-action-state').html('Entered odometer value should be greater than last odometer value');
+-                return;
+-            }
+-
+-            if (isNull(odoDetails) || (odoDetails && (odoDetails.startOdometer == 0))) {
+-                // fuel expense
+-                data.fuelExpenseCode = '';
+-                data.activeFlag = 1;
+-                data.fuelDate = moment().format('YYYY-MM-DD');
+-                data.vehicle = {};
+-                data.vehicle.code = OGPLFormData.busVehicle.code;
+-                
+-                data.vendorContact = {};
+-                data.vendorContact.code = $('#start-trip-fuel-vendor').val();
+-
+-                data.transactionMode = {};
+-                data.transactionMode.code = $('#start-trip-fuel-payment-mode').val();
+-
+-                data.litres = Number($('#start-trip-fuel-litres').val());
+-                data.pricePerLitre = Number($('#start-trip-fuel-rate').val());
+-                data.totalAmount = data.litres * data.pricePerLitre;
+-                data.billNumber = $.trim($('#start-trip-fuel-coupon').val());
+-
+-                // hiring amount and advance amount
+-                data.ogpl = [];
+-
+-                if ((cargoSetting.userAccountModel.code == 'TXRT' && vehicle.ownershipType.code == "HIRE") || cargoSetting.userAccountModel.code != 'TXRT') {
+-                    var hire = {};
+-
+-                    hire.code = '';
+-                    hire.activeFlag = 1;
+-                    hire.amount = Number($('#start-trip-hire-amount').val());
+-                    hire.remarks = '';
+-
+-                    hire.user = {};
+-                    hire.user.code = login_user;
+-
+-                    hire.transitCargo = {};
+-                    hire.transitCargo.code = OGPLFormData.code;
+-                    
+-                    hire.cashbookType = {};
+-                    hire.cashbookType.code = 'HIRING';
+-
+-                    if (Number(hire.amount) > 0) {
+-                        data.ogpl.push(hire);
+-                    }
+-                }
+-                
+-                var advance = {};
+-
+-                advance.code = '';
+-                advance.activeFlag = 1;
+-                advance.amount = Number($('#start-trip-advance-amount').val());
+-                advance.remarks = '';
+-
+-                advance.user = {};
+-                advance.user.code = login_user;
+-
+-                advance.transitCargo = {};
+-                advance.transitCargo.code = OGPLFormData.code;
+-
+-                advance.transactionMode = {};
+-                advance.transactionMode.code = $('#start-trip-adv-paymode').val();
+-                
+-                advance.cashbookType = {};
+-                advance.cashbookType.code = 'ADVANCE';
+-
+-                advance.paymentByContact = {};
+-                advance.paymentByContact.code = $('#start-trip-adv-payby').val();
+-
+-                if (advance.transactionMode.code == 'UPI') {
+-                    advance.bankDetails = {};
+-                    advance.bankDetails.code = $('#start-trip-adv-upi-orgbank').val();
+-                    advance.addAttr1 = $.trim($('#start-trip-adv-upi-id').val());
+-                    advance.addAttr2 = $.trim($('#start-trip-adv-upi-details').val());
+-                } else if (advance.transactionMode.code == 'NBK') {
+-                    advance.bankDetails = {};
+-                    advance.bankDetails.code = $('#start-trip-adv-netbanking-orgbank').val();
+-                    advance.addAttr1 = $.trim($('#start-trip-adv-netbanking-accholder').val());
+-                    advance.addAttr2 = $.trim($('#start-trip-adv-netbanking-bankname').val());
+-                    advance.addAttr3 = $.trim($('#start-trip-adv-netbanking-details').val());
+-                } else if (advance.transactionMode.code == 'CHEQUE') {
+-                    advance.chequeDetails = {};
+-                    advance.chequeDetails.code = $('#start-trip-adv-chq-code').val();
+-                    advance.chequeDetails.activeFlag = 1;
+-
+-                    advance.chequeDetails.organization = {};
+-                    advance.chequeDetails.organization.code = '{$login_branch}';
+-
+-                    advance.chequeDetails.bankDetails = $.trim($('#start-trip-adv-cheque-bankname').val());
+-                    advance.chequeDetails.payerDetails = $.trim($('#start-trip-adv-cheque-payer').val());
+-
+-                    advance.chequeDetails.chequeDate = moment($('#start-trip-adv-cheque-date').val(), 'DD-MM-YYYY').format('YYYY-MM-DD');
+-                    advance.chequeDetails.chequeNo = $.trim($('#start-trip-adv-cheque-no').val());
+-                    advance.chequeDetails.bankCity = $.trim($('#start-trip-adv-cheque-bankcity').val());
+-
+-                    advance.chequeDetails.chequeStatus = {};
+-                    advance.chequeDetails.chequeStatus.code = 'NEW';
+-
+-                    advance.chequeDetails.remarks = $.trim($('#start-trip-adv-cheque-remarks').val());
+-                }
+-
+-                if (Number(advance.amount) > 0) {
+-                    data.ogpl.push(advance);
+-                }
+-
+-                // advance amount
+-                if ((cargoSetting.userAccountModel.code == 'TXRT' && $.inArray(OGPLFormData.cargoActivityType.code, ['OTFD', 'INTRNT']) != -1 && vehicle.ownershipType.code == "OWN" && !isNull(hire) && hire.amount != '') || (cargoSetting.userAccountModel.code != 'TXRT' && !isNull(hire) && hire.amount != '') || advance.amount != '' || advance.transactionMode.code != '' || advance.paymentByContact.code != '') {
+-                    if (!isNull(hire) && hire.amount == '') {
+-                        $('#start-trip-hire-amount').addClass('inp_error');
+-                        err++;
+-                    }
+-                    
+-                    if (advance.amount == '') {
+-                        $('#start-trip-advance-amount').addClass('inp_error');
+-                        err++;
+-                    }
+-
+-                    if (advance.transactionMode.code == '') {
+-                        $('#start-trip-adv-paymode').addClass('inp_error');
+-                        err++;
+-                    }
+-
+-                    if (advance.paymentByContact.code == '') {
+-                        $('#start-trip-adv-payby').addClass('inp_error');
+-                        err++;
+-                    }
+-
+-                    if (advance.transactionMode.code == 'UPI') {
+-                        if (advance.addAttr1 == '') {
+-                            $('#start-trip-adv-upi-id').addClass('inp_error');
+-                            err++;
+-                        }
+-
+-                        if ($('#start-trip-adv-upi-orgbank').val() == '') {
+-                            $('#start-trip-adv-upi-orgbank').addClass('inp_error');
+-                            err++;
+-                        }
+-
+-                        if (advance.addAttr2 == '') {
+-                            $('#start-trip-adv-upi-details').addClass('inp_error');
+-                            err++;
+-                        }
+-                    } else if (advance.transactionMode.code == 'NBK') {
+-                        if (advance.addAttr1 == '') {
+-                            $('#start-trip-adv-netbanking-accholder').addClass('inp_error');
+-                            err++;
+-                        }
+-
+-                        if (advance.addAttr2 == '') {
+-                            $('#start-trip-adv-netbanking-bankname').addClass('inp_error');
+-                            err++;
+-                        }
+-
+-                        if ($('#start-trip-adv-netbanking-orgbank').val() == '') {
+-                            $('#start-trip-adv-netbanking-orgbank').addClass('inp_error');
+-                            err++;
+-                        }
+-
+-                        if (advance.addAttr3 == '') {
+-                            $('#start-trip-adv-netbanking-details').addClass('inp_error');
+-                            err++;
+-                        }
+-                    } else if (advance.transactionMode.code == 'CHEQUE') {
+-                        if (advance.chequeDetails.payerDetails == '') {
+-                            $('#start-trip-adv-cheque-payer').addClass('inp_error');
+-                            err++;
+-                        }
+-
+-                        if ($('#start-trip-adv-cheque-date').val() == '') {
+-                            $('#start-trip-adv-cheque-date').addClass('inp_error');
+-                            err++;
+-                        }
+-
+-                        if (advance.chequeDetails.chequeNo == '') {
+-                            $('#start-trip-adv-cheque-no').addClass('inp_error');
+-                            err++;
+-                        }
+-
+-                        if (advance.chequeDetails.bankDetails == '') {
+-                            $('#start-trip-adv-cheque-bankname').addClass('inp_error');
+-                            err++;
+-                        }
+-
+-                        if (advance.chequeDetails.bankCity == '') {
+-                            $('#start-trip-adv-cheque-bankcity').addClass('inp_error');
+-                            err++;
+-                        }
+-                    }
+-                }
+-
+-                // fuel expense
+-                if (data.vendorContact.code != '' || data.litres != '' || data.pricePerLitre != '' || data.billNumber != '') {
+-                    if (data.vendorContact.code == '') {
+-                        $('#start-trip-fuel-vendor').addClass('inp_error');
+-                        err++;
+-                    }
+-
+-                    if (data.litres == '') {
+-                        $('#start-trip-fuel-litres').addClass('inp_error');
+-                        err++;
+-                    }
+-
+-                    if (data.pricePerLitre == '') {
+-                        $('#start-trip-fuel-rate').addClass('inp_error');
+-                        err++;
+-                    }
+-
+-                    if (data.billNumber == '') {
+-                        $('#start-trip-fuel-coupon').addClass('inp_error');
+-                        err++;
+-                    }
+-                }
+-            }
+-            
+-            if(err) {
+-                $('#start-trip-action-state').removeClass('alert-success hide').addClass('alert alert-danger').show();
+-                $('#start-trip-action-state').html('Please enter/select the values in the field that are marked in red');
+-                return;
+-            }
+-            $('#start-trip-panel-btn').hide();
+-            $('#start-trip-action-state').removeClass('alert').removeClass('alert-danger').removeClass('alert-success').html(loading_popup);
+-            var transitList = [];
+-                $('#transit-type [name="transit-type"]:checked').each(function() {
+-                    transitList.push($(this).val());
+-                });
+-            //check is empty load with outfordelivery    
+-            var is_emtpy_with_load = transitList.includes('INTRNT') &&  transitList.includes('OTFD');
+-            var onlyEmptyLoad = transitList.includes('INTRNT') && !transitList.includes('OTFD');
+-            // if(is_emtpy_with_load){
+-            //     console.log($('.local-via-branches').val());
+-            //     let toOrganizationForLocal=$('#local-via-branches option:selected').val();
+-            //         data.toOrganization.code=toOrganizationForLocal;
+-            // }
+-            $.ajax({
+-                type: "POST",
+-                dataType: 'json',
+-                url: base_url + "cargo/update-start-odometer",
+-                data: data,
+-                success: function (response) {
+-                    if (response.status == 1) {       
+-                        startOdoUpdated == 1;         
+-                        $('#start-trip-action-state').addClass('alert').addClass('alert-success').html('Your request processed successfully');
+-                        window.setTimeout(function () {
+-                            hideStartTripDialog();
+-                            if(!is_emtpy_with_load){
+-                                let transitcode=OGPLFormData.code;
+-                                var params = {};
+-                                params.transitCode = transitcode;
+-                                    
+-                                    if(allowLoading == false){
+-                                        window.location.reload();
+-                                    }else{
+-                                        var url = base_url + "#cargo/add-ogpl?" + $.param(params)+'&INTRNT=HIDE';
+-                                        window.open(url, "_self");
+-                                        checkURL();
+-                                    }
+-                            }
+-                        }, 3000);
+-                    } else {
+-                        $('#start-trip-action-state').addClass('alert').addClass('alert-danger').html(response.errorDesc);
+-                        $('#start-trip-panel-btn').show();
+-                    }
+-
+-                }
+-            });
+-        }
+-
+         function showLoadedLrDialog() {
+             $('#transitv3-loaded-lr-dialog').css('background', '#fff');
+             $('#transitv3-loaded-lr-dialog').removeClass('hide');
+@@ -6509,7 +5956,22 @@
+         }
+     });
+ }
+-  
++
++    function checkOdometerUp(){
++        if(startOdoUpdated == 0){
++            return true;
++        }else{
++            false;
++        }
++
++    }
++
++    function  openOdometerDialog(){
++        var transitCode = transitOgplcode ?transitOgplcode:OGPLFormData.code;
++        console.log(transitCode);
++        var loadVehicle =$('#ogpl-search-vehicle').select2('data');
++        getOdometter(loadVehicle.code ,transitCode );
++    }
+ </script>
+ 
+ {/literal}

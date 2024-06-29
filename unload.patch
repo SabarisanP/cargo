@@ -1,0 +1,38 @@
+Index: application/controllers/cargo.php
+===================================================================
+--- application/controllers/cargo.php	(revision 5253)
++++ application/controllers/cargo.php	(working copy)
+@@ -820,6 +820,9 @@
+         $data['user_login_code'] = $this->session->userdata('user_id');
+         $data['login_branch'] = $this->session->userdata('org_code');
+         $data['cargo_setting'] = _get_cargo_settings();
++        $unloadingChargeConfig = json_decode($data['cargo_setting']->unloadingChargeConfig, true);
++        $unloadingChargeConfig= array_keys($unloadingChargeConfig);
++        $data['loading_chagers_setting'] = $unloadingChargeConfig[0];
+         $data['instant_cancellation_minutes'] = $this->session->userdata('instant_cancellation_minutes');
+         $data['transaction_mode'] = $this->config->item('transaction_mode');
+         $data['proof_document_type'] = $this->config->item('proof_document_type');
+Index: application/views/site/cargo/booking-details.tpl
+===================================================================
+--- application/views/site/cargo/booking-details.tpl	(revision 5253)
++++ application/views/site/cargo/booking-details.tpl	(working copy)
+@@ -2757,6 +2757,8 @@
+ var addonsMapped = {((object) $addons_mapped)|json_encode}; 
+ var login_branch_code = {$login_branch|json_encode};
+ var userData = {$groupusers['loginUser']|json_encode};
++var unload_flag ={$loading_chagers_setting|json_encode}
++
+ var bookingpage = {$onBooked|json_encode};
+ var subTransactionMode = $('#pay-transaction-mode-sub option');
+ var deliveryAmt = {$deliveryAmt};
+@@ -4121,6 +4123,10 @@
+     if (['citycargo', 'cityparcel'].includes(namespaceCode)) {
+         $('#add-unload-cb').prop('checked', true).trigger('change');
+     }
++    if(unload_flag=="SLC"){
++        $('#add-unload-cb').prop('checked', true).trigger('change');
++        $('#add-unload-cb-div').addClass('hide');
++    }
+     getAllDeliveryInputs();
+ }
+ 

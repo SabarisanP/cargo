@@ -1,0 +1,392 @@
+Index: application/controllers/cargo.php
+===================================================================
+--- application/controllers/cargo.php	(revision 5371)
++++ application/controllers/cargo.php	(working copy)
+@@ -8663,14 +8663,12 @@
+                 return;
+             }
+         }
++
++        $fromOrganization = $this->input->post('fromOrganization');
+         $toOrganization = $this->input->post('toOrganization');
+-
+-        if(isset($toOrganization)){
+-            $toOrganization= $toOrganization['code'];
+-        }else{
+-            $toOrganization=array('code' => $this->session->userdata('org_code'));
+-        }
+-
++        $fromOrganizationCode = isset($fromOrganization['code']) ? $fromOrganization['code'] : 'NA';
++        $toOrganizationCode = isset($toOrganization['code']) ? $toOrganization['code'] : 'NA';
++            
+         $ogpl = $this->api_model->cargoOGPLupdate(array(
+             'activeFlag' => $this->input->post('activeFlag'),
+             'code' => $this->input->post('code') ?: '',
+@@ -8677,8 +8675,8 @@
+             'name' => $this->input->post('name'),
+             'fromStation' => $this->input->post('fromStation'),
+             'toStation' => $this->input->post('toStation'),
+-            'fromOrganization' => array('code' => $this->session->userdata('org_code')),
+-            'toOrganization' => array('code' => $toOrganization),
++            'fromOrganization' => array('code' => $fromOrganizationCode?$fromOrganizationCode:"NA"),
++            'toOrganization' => array('code' => $toOrganizationCode?$toOrganizationCode:"NA"),
+             'viaStations' => $this->input->post('viaStations') ?: [],
+             'viaZones' => $this->input->post('viaZones') ?: [],
+             'hubViaStations' => $this->input->post('linkLoadStations') ?: [],
+@@ -8726,8 +8724,8 @@
+                 'transitDetailsType' => array('code' => 'DFLT'),
+                 'toStation' => array('code' => $row['to']),
+                 'fromStation' => array('code' => $row['from']),
+-                'fromOrganization' => array('code' => $row['oldTransitOrg']),
+-                'toOrganization' => array('code' => $row['transitOrganization']),
++                'fromOrganization' => array('code' =>  $fromOrganizationCode?$fromOrganizationCode:"NA"),
++                'toOrganization' => array('code' => $toOrganizationCode?$toOrganizationCode:"NA"),
+                 'transitCargo' => array('code' => $ogpl->data->code),
+                 'transitOrganization' => array('code' => $row['transitOrganization']),
+                 'cargoList' => $codes
+@@ -8757,8 +8755,8 @@
+                 'transitDetailsType' => array('code' => 'HULD'),
+                 'toStation' => array('code' => $row['to']),
+                 'fromStation' => array('code' => $row['from']),
+-                'fromOrganization' => array('code' => $row['oldTransitOrg']),
+-                'toOrganization' => array('code' => $row['transitOrganization']),
++                'fromOrganization' => array('code' =>$fromOrganizationCode?$fromOrganizationCode:"NA"),
++                'toOrganization' => array('code' =>$toOrganizationCode?$toOrganizationCode:"NA"),
+                 'transitCargo' => array('code' => $ogpl->data->code),
+                 'transitOrganization' => array('code' => $row['transitOrganization']),
+                 'cargoList' => $codes
+@@ -8788,8 +8786,8 @@
+                 'transitDetailsType' => array('code' => 'LCLD'),
+                 'toStation' => array('code' => $row['to']),
+                 'fromStation' => array('code' => $row['from']),
+-                'fromOrganization' => array('code' => $row['oldTransitOrg']),
+-                'toOrganization' => array('code' => $row['transitOrganization']),
++                'fromOrganization' => array('code' => $fromOrganizationCode?$fromOrganizationCode:"NA"),
++                'toOrganization' => array('code' => $toOrganizationCode?$toOrganizationCode:"NA"),
+                 'transitCargo' => array('code' => $ogpl->data->code),
+                 'transitOrganization' => array('code' => $row['transitOrganization']),
+                 'cargoList' => $codes
+@@ -8819,8 +8817,8 @@
+                 'transitDetailsType' => array('code' => 'OFDLD'),
+                 'toStation' => array('code' => $row['to']),
+                 'fromStation' => array('code' => $row['from']),
+-                'fromOrganization' => array('code' => $row['oldTransitOrg']),
+-                'toOrganization' => array('code' => $row['transitOrganization']),
++                'fromOrganization' => array('code' => $fromOrganizationCode?$fromOrganizationCode:"NA"),
++                'toOrganization' => array('code' => $toOrganizationCode?$toOrganizationCode:"NA"),
+                 'transitCargo' => array('code' => $ogpl->data->code),
+                 'transitOrganization' => array('code' => $row['transitOrganization']),
+                 'cargoList' => $codes
+Index: application/views/site/cargo/add-ogplv3.tpl
+===================================================================
+--- application/views/site/cargo/add-ogplv3.tpl	(revision 5371)
++++ application/views/site/cargo/add-ogplv3.tpl	(working copy)
+@@ -195,8 +195,8 @@
+                                                             <div class="form-group">
+                                                                 <label for="ogpl-from" class="req">From Station</label>
+                                                                 <div class="input-group col-md-12">
+-                                                                    <select id="ogpl-from" class="form-control OTFD-field" onchange="setHubLoadStations(this); getNextOGPLSequence();setLocalTransitStations();">
+-                                                                        <option value="" selected="">Select From</option>
++                                                                    <select id="ogpl-from" class="form-control OTFD-field"  onclick="stationfilter1();" onchange="setHubLoadStations(this); getNextOGPLSequence();setLocalTransitStations();">
++                                                                        <option value="" selected="" disabled>Select From</option>
+                                                                         {foreach item=station from=$stations}
+                                                                             <option value="{$station.code}" data-stationcode="{$station.code}">{$station.name}</option>
+                                                                         {/foreach}
+@@ -209,15 +209,41 @@
+                                                             <div class="form-group">
+                                                                 <label for="ogpl-to" class="req">To Station</label>
+                                                                 <div class="input-group col-md-12">
+-                                                                    <select id="ogpl-to" class="form-control OTFD-field" onchange="setHubLoadStations(this);setHubLoadZones(this);">
+-                                                                        <option value="" selected="">Select To</option>
++                                                                    <select id="ogpl-to" class="form-control OTFD-field" onclick="stationfilter2();" onchange="setHubLoadStations(this);setHubLoadZones(this);">
++                                                                        <option value="" selected=""disabled   >Select To</option>
+                                                                         {foreach item=station from=$stations}
+-                                                                            <option value="{$station.code}">{$station.name}</option>
++                                                                            <option value="{$station.code}" data-stationcode="{$station.code}">{$station.name}</option>
+                                                                         {/foreach}
+                                                                     </select>
+                                                                 </div>
+                                                             </div>
+                                                         </div>
++                                                        <div class="col-md-6" data-transit-field="TRNT">
++                                                            <div class="form-group from-org">
++                                                                <label for="ogpl-from-branch" class="req">From organization</label>
++                                                                <div class="input-group col-md-12">
++                                                                    <select id="ogpl-from-branch" name="organizationCode" class="form-control">
++                                                                        {foreach item=branch from=$branches key=bcode}
++                                                                            <option value="{$branch->code}" data-brachcode="{$branch->station->code}">{$branch->name}</option>
++                                                                        {/foreach}
++                                                                    </select>
++                                                                </div>
++                                                            </div>
++                                                        </div>
++
++                                                        <div class="col-md-6" data-transit-field="TRNT" >
++                                                            <div class="form-group to-org">
++                                                                <label for="ogpl-to-branch" class="req">To organization</label>
++                                                                <div class="input-group col-md-12">
++                                                                    <select id="ogpl-to-branch" name="organizationCode" class="form-control">
++                                                                        {foreach item=branch from=$branches key=bcode}
++                                                                            <option value="{$branch->code}" data-brachcode="{$branch->station->code}">{$branch->name}</option>
++                                                                        {/foreach}
++                                                                    </select>
++                                                                </div>
++                                                            </div>
++                                                        </div>
++
+                                                         <div class="col-md-6">
+                                                             <div class="form-group">
+                                                                 <label for="ogpl-departuretime">Departure Time</label>
+@@ -435,17 +461,18 @@
+                                                 <span class="f-16" id="edit-ogpl-from"></span> - <span class="f-16" id="edit-ogpl-to"></span>
+                                             </div>
+                                             <div class="col-md-7" style="line-height: 25px;">
+-                                                <b>From :</b> <span id="edit-ogpl-sub-from"></span> &nbsp;&nbsp;<b>To :</b> <span id="edit-ogpl-sub-to"></span><br>
++                                                <b>Route : </b> <span id="edit-ogpl-sub-from"></span>&nbsp;&nbsp;<b>-</b>&nbsp;&nbsp;<span id="edit-ogpl-sub-to"></span><br>
++                                                <b><i class="fa fa-home" aria-hidden="true" style="font-size: 16px;"></i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><span id="edit-ogpl-branch-from"></span> &nbsp;&nbsp;<b>-</b>&nbsp;&nbsp;<span id="edit-ogpl-branch-to"></span><br>
+                                                 <b>Driver :</b> <span id="edit-ogpl-driver"></span> &nbsp;&nbsp;<b>Driver 2 :</b> <span id="edit-ogpl-driver2"></span><br>
+                                                 <b>Supervisor :</b> <span id="edit-ogpl-supervisor"></span><br>
+                                                 <b>Via :</b> <span id="edit-ogpl-via"></span><br>
+-                                                <b>Via Zone :</b> <span id="edit-ogpl-via-zone"></span><br>
+-                                                <b>{lang('hub')} Load Via :</b> <span id="edit-link-load-via"></span><br>
+-                                                <b>{lang('hub')} Load Via Zone :</b> <span id="edit-link-load-via-zone"></span><br>
++                                                <span id="edit-ogpl-via-zone-hide"><b>Via Zone :</b> <span id="edit-ogpl-via-zone"></span><br></span>
++                                                <span id="edit-link-load-via-hide"><b>{lang('hub')} Load Via :</b> <span id="edit-link-load-via"></span><br></span>
++                                                <span id="edit-link-load-via-zone-hide"><b>{lang('hub')} Load Via Zone :</b> <span id="edit-link-load-via-zone"></span><br></span>
+                                                 {* <b>Local Transit Via :</b> <span id="edit-local-transit-via"></span> *}
+-                                                <b>Local Transit Via :</b> <span id="edit-local-via-branches"></span><br>
+-                                                <b>Out For Delivery :</b> <span id="edit-out-for-delivery-branch"></span><br>
+-                                                <b>Remarks :</b> <span id="edit-load-remarks"></span>
++                                                <span id="edit-local-hide-branch-via"><b>Local Transit Via :</b> <span id="edit-local-via-branches"></span><br></span>
++                                                <span id="edit-out-for-delivery-hide-branch"><b>Out For Delivery :</b> <span id="edit-out-for-delivery-branch"></span><br></span>
++                                                <span id="edit-hide-remarks"> <b>Remarks :</b> <span id="edit-load-remarks"></span></span>
+                                             </div>
+                                             <div class="col-md-12">
+                                                 <span class="badge m-t-5 hide" id="loading-until-badge"></span>&emsp;
+@@ -670,10 +697,10 @@
+                                             {* setting based strip start module *}
+                                             {if $cargo_setting->transitOdometerModelCode == "ORGDTN"}  
+                                                 {if $ogpl->fromStation->code == $login_station }
+-                                                <button class="btn btn-warning {if !$ogpl || (isset($odoDetails) && $odoDetails->startOdometer > 0) || (!$odoDetails && $show_end_odo == 0)}hide{/if}" id="start-transit-btn" type="button" onclick="showStartTripDialog(true);">Start Trip</button>
++                                                <button class="btn btn-warning {if !$ogpl || (isset($odoDetails) && $odoDetails->startOdometer > 0) || (!$odoDetails && $show_end_odo == 0)}hide{/if}" id="start-transit-btn" type="button" onclick="openOdometerDialog();">Start Trip</button>
+                                                {else}
+                                                    {if $odoDetails->fromOdometerRange > 0}
+-                                                       <button class="btn btn-warning {if !$ogpl || (isset($odoDetails) && $odoDetails->startOdometer > 0) || (!$odoDetails && $show_end_odo == 0) }hide{/if}" id="start-transit-btn" type="button" onclick="showStartTripDialog(true);">Start Trip</button>
++                                                       <button class="btn btn-warning {if !$ogpl || (isset($odoDetails) && $odoDetails->startOdometer > 0) || (!$odoDetails && $show_end_odo == 0) }hide{/if}" id="start-transit-btn" type="button" onclick="openOdometerDialog();">Start Trip</button>
+                                                    {/if}
+                                                {/if}
+                                             {else}
+@@ -1425,6 +1452,8 @@
+             $('#ogpl-tpl').select2();
+             $('#ogpl-from').select2();
+             $('#ogpl-to').select2();
++            $('#ogpl-from-branch').select2();
++            $('#ogpl-to-branch').select2();
+             $('#start-trip-supervisor').select2();
+             $('#start-trip-adv-paymode').select2();
+             $('#start-trip-adv-payby').select2();
+@@ -1646,6 +1675,46 @@
+             }).select2('val', []).trigger('change');
+         }
+ 
++        var ogpl_branch_list_from = $('#ogpl-from-branch option');
++        var ogpl_branch_list_to = $('#ogpl-to-branch option');
++        function stationfilter1(){
++            var ogpl_station_from = $('#ogpl-from option:selected').data('stationcode');
++            var ogpl_station_from_arr = ogpl_station_from.split(',');
++            $('#ogpl-from-branch').html(function() {
++                return ogpl_branch_list_from.filter(function() {
++                    return $.inArray($(this).data('brachcode'), ogpl_station_from_arr) !== -1 || ($('#ogpl-from').val() == 'NA' && $(this).val() != 'NA');
++                });
++            });
++            $('.from-org').removeClass('hide');
++            if ($('#ogpl-from-branch option:selected').length > 0) {
++                $('.from-org').removeClass('hide');
++            } else {
++                $('.from-org').addClass('hide');
++                $('#ogpl-from-branch').val('');
++            }
++
++        }
++
++        function stationfilter2() {
++            var ogpl_station_to = $('#ogpl-to option:selected').data('stationcode');
++            var ogpl_station_to_arr = ogpl_station_to.split(',');
++            var userInsideStation = $('#ogpl-to').val() == 'NA';
++            $('#ogpl-to-branch').html(function() {
++                return ogpl_branch_list_to.filter(function() {
++                    var branchCode = $(this).data('brachcode');
++                    return $.inArray(branchCode, ogpl_station_to_arr) !== -1 || userInsideStation;
++                });
++            });
++            
++            $('.to-org').removeClass('hide');
++            if ($('#ogpl-to-branch option:selected').length > 0) {
++                $('.to-org').removeClass('hide');
++            } else {
++                $('.to-org').addClass('hide');
++                $('#ogpl-to-branch').val('');
++            }
++        }
++
+         function setViaStations() {
+             if ($('#ogpl-via-zones').val() == null) {
+                 $('#ogpl-via').val('').trigger('change');
+@@ -1709,7 +1778,9 @@
+ 
+             $('#ogpl-from').val(OGPLEdit.fromStation.code).trigger('change');
+             $('#ogpl-to').val(OGPLEdit.toStation.code).trigger('change');
+-                        
++            $('#ogpl-from-branch').val(OGPLEdit.fromOrganization.code).trigger('change');
++            $('#ogpl-to-branch').val(OGPLEdit.toOrganization.code).trigger('change');
++
+             // Direct Load
+             if (OGPLEdit.viaStations.length > 0) {
+                 $('#transit-type [name="transit-type"][value="TRNT"]').prop('checked', true).trigger('change');
+@@ -1867,6 +1938,8 @@
+             $('#edit-ogpl-to').text(OGPLEdit.toStation.name);
+             $('#edit-ogpl-sub-from').text(OGPLEdit.fromStation.name);
+             $('#edit-ogpl-sub-to').text(OGPLEdit.toStation.name);
++            $('#edit-ogpl-branch-from').text(OGPLEdit.fromOrganization.name);
++            $('#edit-ogpl-branch-to').text(OGPLEdit.toOrganization.name);
+ 
+             $('#edit-ogpl-vehicle').text(OGPLEdit.busVehicle.registationNumber);
+             $('#edit-ogpl-driver').text(OGPLEdit.vehicleDriver.name);
+@@ -1888,6 +1961,9 @@
+             $('#edit-link-load-via-zone').text($('#link-load-zones option:selected').map(function() {
+                 return $(this).text();
+             }).get().join(', '));
++            if($('#local-via-branches option:selected').length ==0){
++                $('#edit-local-hide-branch-via').addClass('hide');
++            }
+ 
+             $('#edit-local-via-branches').text($('#local-via-branches option:selected').map(function() {
+                 return $(this).text();
+@@ -2553,17 +2629,20 @@
+             data.name = (data.fromStation.name).toUpperCase().substring(0, 4) +' TO '+ (data.toStation.name).toUpperCase().substring(0, 4);
+             
+             data.fromOrganization = {};
+-            data.fromOrganization.code = user_login_branch;
++            data.fromOrganization.code =$('#ogpl-from-branch').val();
++            data.fromOrganization.name =$('#ogpl-from-branch option:selected').text();
+ 
+             data.toOrganization = {};
+-            data.toOrganization.code = user_login_branch;
+-
++            data.toOrganization.code = $('#ogpl-to-branch').val();
++            data.toOrganization.name =$('#ogpl-to-branch option:selected').text();
+             if(allowLoading == 'LOAD'){
+                 var selectedOrg = $('#local-via-branches').val(); 
+                 var finalEl = selectedOrg[selectedOrg.length - 1];
+-                data.toOrganization.code = finalEl;
++                data.toOrganization.code =$('#ogpl-to-branch').val();
++                data.toOrganization.name =$('#ogpl-to-branch option:selected').text();
+             }else{
+-                data.toOrganization.code = user_login_branch;
++                data.toOrganization.code = $('#ogpl-to-branch').val();
++                data.toOrganization.name =$('#ogpl-to-branch option:selected').text();
+             }
+             
+             data.departureMinutes = Number($('#ogpl-departuretime').val());
+@@ -2817,14 +2896,41 @@
+                 $('#edit-ogpl-sub-from').text(OGPLFormData.fromStation.name);
+             }
+             $('#edit-ogpl-to').text(OGPLFormData.toStation.name);
++            $('#edit-ogpl-branch-from').text(OGPLFormData.fromOrganization.name);
++            $('#edit-ogpl-branch-to').text(OGPLFormData.toOrganization.name);
+             $('#edit-ogpl-sub-to').text(OGPLFormData.toStation.name);
+             $('#edit-ogpl-vehicle').text(data.busVehicle.registationNumber);
+             $('#edit-ogpl-driver').text(OGPLFormData.vehicleDriver.name);
+             $('#edit-ogpl-driver2').text(OGPLFormData.secondaryDriver.name || '-');
+             $('#edit-ogpl-supervisor').text(OGPLFormData.supervisor.name || '-');
++            $('#edit-load-remarks').text(OGPLFormData.remarks);
+             // $('#edit-ogpl-odometer').text(OGPLFormData.odometer || '-');
+-            $('#edit-load-remarks').text(OGPLFormData.remarks || '-');
+ 
++            if ($('#edit-load-remarks').text().trim() == '') {
++                $('#edit-hide-remarks').addClass('hide');
++            }
++
++            if ($('#edit-out-for-delivery-branch').text().trim() == '') {
++                $('#edit-out-for-delivery-hide-branch').addClass('hide');
++            }
++
++            if ($('#edit-link-load-via-zone').text().trim() == '') {
++                $('#edit-link-load-via-zone-hide').addClass('hide');
++            }
++
++            if ($('#edit-link-load-via').text().trim() == '') {
++                $('#edit-link-load-via-hide').addClass('hide');
++            }
++
++            if($('#edit-local-via-branches').text().trim() == ''){
++                $('#edit-local-hide-branch-via').addClass('hide');
++            }
++
++            if($('#edit-ogpl-via-zone').text().trim() == ''){
++                $('#edit-ogpl-via-zone-hide').addClass('hide');
++            }
++
++        
+             $('#edit-ogpl-via').text($('#ogpl-via option:selected').map(function() {
+                 return $(this).text();
+             }).get().join(', '));
+@@ -4998,6 +5104,7 @@
+                 let toOrganizationForLocal=$('#local-via-branches option:selected').val();
+                 data.toOrganization.code=toOrganizationForLocal; 
+             }
++            console.log(data);
+             if(action=='post'){
+                 $.ajax({
+                     type: 'POST',
+@@ -5013,7 +5120,7 @@
+                                     errors.push(state.code + ' - ' + state.name);
+                                 }
+                             });
+-
++                            
+                             if (errors.length) {
+                                 $('#save-transitv3-action-state').removeClass('alert-success').addClass('alert-danger')
+                                 $('#save-transitv3-action-state').html(errors.join('<br/>'));
+@@ -5036,6 +5143,7 @@
+                                     
+                                     OGPLFormData.code = response.OGPLCode;
+                                     $('#hid-ogpl-code').val(response.OGPLCode)
++                                    
+                                 }, 3000);
+                             }
+                         } else {
+@@ -5051,12 +5159,22 @@
+                             $('#save-transitv3-action-state').removeClass('alert-success').addClass('alert-danger')
+                             $('#save-transitv3-action-state').html(response.errorDesc);
+                         }
++                        window.setTimeout(function () {
++                            if(checkOdometerUp()){
++                                openOdometerDialog();
++                            }
++                        }, 3000);
+                     }
+                 });
+             }else{
+                 return data;
+-            }
+-        }
++                        }
++                        window.setTimeout(function () {
++                            if(checkOdometerUp()){
++                                openOdometerDialog();
++                            }
++                        }, 3000);
++                    }
+ 
+         function editOGPL() {
+             $('#transit-complete-btn').addClass('hide');
+@@ -5106,7 +5224,7 @@
+             data.transitCargo = {};
+             data.transitCargo.code = OGPLFormData.code;
+             data.fromOrganization = {};
+-            data.fromOrganization.code = user_login_branch;
++            data.fromOrganization.code = $('#ogpl-from-branch').val();
+             data.startOdometer = Number($('#start-trip-odo').val());
+             data.departureAt = moment().format('YYYY-MM-DD HH:mm:ss');
+             data.fromOrganizationContact = {};

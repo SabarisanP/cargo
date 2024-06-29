@@ -1,0 +1,119 @@
+{if $filterType == 'SUMMARY'}
+    <table width="100%" style="font-family: Times New Roman;">
+        <tr>
+            <td colspan="10" align="center"><b>Transit Movement Report</b></td>
+        </tr>
+        <tr>
+            <td colspan="3"><b>From {$fromDate|date_format:$fromDate} &nbsp; To {$toDate|date_format:$toDate} </b></td>
+            <td colspan="4" align="right"><b>Report Date/Time : {date("d-m-Y h:i A")}</b></td>
+        </tr>
+        <tr>
+            <td colspan="10" align="center">
+                <b>{$zoneName}
+                </b>
+            </td>
+        </tr>
+    </table>
+    <br>
+    <table width="100%" style="font-family: Times New Roman;">
+        <thead>
+            <tr style="background-color:#92d050; color: #0000; font-weight: bold;">
+                <td>Station Name</td>
+                <td>Branch Name </td>
+                <td>Booked Count </td>
+                <td>Loaded </td>
+                <td>Pending Load </td>
+                <td>In-Transit count </td>
+                <td>Reached Count</td>
+            </tr>
+        </thead>
+        <tbody class="body_table">
+            {assign var=t_bk_count value=0}
+            {assign var=t_load_count value=0}
+            {assign var=t_pending_count value=0}
+            {assign var=t_unload_count value=0}
+            {assign var=t_reach_count value=0}
+            {foreach item=row from=$results}
+                <tr>
+                    <td align='center'>{$row->from_station_name}</td>
+                    <td align='center'>{$row->from_organization_name}</td>
+                    <td align='center'>{$row->booked_count}</td>
+                    <td align='center'>{$row->pending_count}</td>
+                    <td align='center'>{$row->loaded_count}</td>
+                    <td align='center'>{$row->unloaded_count}</td>
+                    <td align='center'>{$row->reached_count}</td>
+                    {assign var=t_bk_count value=$t_bk_count +$row->booked_count}
+                    {assign var=t_load_count value=$t_load_count +$row->loaded_count}
+                    {assign var=t_pending_count value=$t_pending_count + $row->pending_count}
+                    {assign var=t_unload_count value=$t_unload_count +$row->unloaded_count}
+                    {assign var=t_reach_count value=$t_reach_count +$row->reached_count}
+                </tr>
+            {/foreach}
+        </tbody>
+        {if count($results) > 0}
+            <tfoot>
+                <tr>
+                    <td colspan="2" align="right" class="bold"><b>Total</b></td>
+                    <td class="bold" align="center"><b>{$t_bk_count}</b></td>
+                    <td class="bold" align="center"><b>{$t_load_count}</b></td>
+                    <td class="bold" align="center"><b>{$t_pending_count}</b></td>
+                    <td class="bold" align="center"><b>{$t_unload_count}</b></td>
+                    <td class="bold" align="center"><b>{$t_reach_count}</b></td>
+                </tr>
+            </tfoot>
+        {/if}
+    </table>
+{/if}
+
+{if $filterType == 'DETAILS'}
+    <table width="100%" style="font-family: Times New Roman;">
+        <tr>
+            <td colspan="10" align="center"><b>Transit Movement Report</b></td>
+        </tr>
+        <tr>
+            <td colspan="5"><b>From {$fromDate|date_format:$fromDate} &nbsp;To {$toDate|date_format:$toDate} </b></td>
+            <td colspan="4" align="right"><b>Report Date/Time : {date("d-m-Y h:i A")}</b></td>
+        </tr>
+        <tr>
+            <td colspan="10" align="center">
+                <b>{$zoneName}</b>
+            </td>
+        </tr>
+    </table>
+    <br>
+    <table width="100%" style="font-family: Times New Roman;">
+        <thead>
+            <tr style="background-color:#92d050; color: #0000; font-weight: bold;">
+                <td align="center">LR No</td>
+                <td align="center">Booked Time </td>
+                <td align="center">From</td>
+                <td align="center">To</td>
+                <td align="center">Start Transit Age</td>
+                <td align="center">Transit Status</td>
+                <td align="center">End Transit Age</td>
+                <td align="center">Article count</td>
+                <td align="center">Last Updated On </td>
+            </tr>
+        </thead>
+        <tbody class="body_table">
+            {foreach item=row from=$results}
+                <tr>
+                    <td align='center'>{$row->cargo_code}</td>
+                    <td align='center'>{$row->booked_at|date_format:"d, M y g:i A"}</td>
+                    <td align='center'>{$row->from_station_name}</td>
+                    <td align='center'>{$row->to_station_name}</td>
+                    <td align='center'>{$row->start_transit_age}</td>
+                    <td align='center'>{$row->transit_status}</td>
+                    <td align='center'>
+                        {if $row->end_transit_age=="NA"} -
+                        {else}
+                            {$row->end_transit_age}
+                        {/if}
+                    </td>
+                    <td align='center'>{$row->article_count}</td>
+                    <td align='center'>{$row->updated_at|date_format:"d, M y g:i A"}</td>
+                </tr>
+            {/foreach}
+        </tbody>
+    </table>
+{/if}

@@ -1,0 +1,102 @@
+Index: application/controllers/config.php
+===================================================================
+--- application/controllers/config.php	(revision 5326)
++++ application/controllers/config.php	(working copy)
+@@ -4959,6 +4959,14 @@
+         
+         echo $this->api_model->updateUserPaymentType($data);
+     }
++
++    public function vehicle_reset(){
++        $this->is_logged_in();
++        $data['vehicleCode'] =$this->input->post('vehicleCode');
++        $result =$this->api_model->resetVehicle($data['vehicleCode']);
++        $results =json_encode($result);
++        echo json_decode($results);
++    }
+ }
+ 
+ ?>
+Index: application/models/api_model.php
+===================================================================
+--- application/models/api_model.php	(revision 5326)
++++ application/models/api_model.php	(working copy)
+@@ -4928,6 +4928,12 @@
+         $url = '/' . $this->_user_hash . '/cargo/organization/delivery/branch';
+         return $this->_getJson('get', $url, $param);
+     }
++
++    function resetVehicle($param = array()) {
++        $url = '/' . $this->_user_hash . '/bus/vehicle/' . $param.'/odometer/reset';
++        return $this->_getJson('post', $url);
++    }
++
+ }
+ 
+ ?>
+Index: application/views/site/admin/vehicle.tpl
+===================================================================
+--- application/views/site/admin/vehicle.tpl	(revision 5326)
++++ application/views/site/admin/vehicle.tpl	(working copy)
+@@ -115,7 +115,11 @@
+                                                                 <a href="javascript:;" title="delete" class="del"  onclick='deleteVehicle("{$row->code}")'><i class="fa fa-trash-o fa-lg ired"></i></a>
+                                                                 </span>
+                                                             {/if}
+-
++                                                            {if $action_rights['RESET-VCLE']>0} 
++                                                                <span class="p_l_15" onclick='resetVehicle("{$row->code}")' title="Odometer Reset">
++                                                                    <a href="javascript:;"  class="myButton" ><i class="fa fa-repeat" aria-hidden="true"></i></a>
++                                                                </span>
++                                                            {/if}
+                                                         </td>
+                                                     </tr>
+                                                 {/foreach}
+Index: assets/js/pages/vehicle.js
+===================================================================
+--- assets/js/pages/vehicle.js	(revision 5326)
++++ assets/js/pages/vehicle.js	(working copy)
+@@ -361,3 +361,43 @@
+     })
+ 
+ }
++
++function resetVehicle(code){
++    var data ={};
++    var vehicle = _.find(allVehicleData, (o) => o.code == code) || {};
++    if(vehicle.lastOdometer==0){
++        alert('Odometer Already Reset !!');
++        return;
++    }
++    if (!confirm("Do you want to reset the odometer?")) {
++       return
++    }
++    var loading_overlay = iosOverlay({
++        text: "Please Wait...",
++        icon: "fa fa-spinner fa-spin"
++    });
++
++    data.vehicleCode =code;
++    $('.myButton').prop('disabled', true);
++    $.ajax({
++        type: "POST",
++        dataType: 'json',
++        url: base_url + "config/vehicle-reset",
++        data: data,
++        success: function(response) {
++            if (response.status == 1) {
++                window.setTimeout(function() {
++                    loading_overlay.update({
++                        icon: "fa fa-check",
++                        text: "Done !",
++                        color: '#0000'
++                    });
++                    checkURL();
++                }, 1000);
++            } 
++            window.setTimeout(function() {
++                loading_overlay.hide();
++            }, 2000);
++        }
++    })
++}
+\ No newline at end of file

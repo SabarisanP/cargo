@@ -1,0 +1,90 @@
+Index: application/controllers/cargo.php
+===================================================================
+--- application/controllers/cargo.php	(revision 5267)
++++ application/controllers/cargo.php	(working copy)
+@@ -8111,7 +8111,7 @@
+         $data['localTransitSearchData'] = $this->input->get('linkTransitCode');
+         $data['cargo_setting'] = _get_cargo_settings();
+         $data['f_t_mode'] = config_item('transaction_mode');
+-
++       
+         if ($data['cargo_setting']->ogplModelCode == "VER3") {
+             $show_end_odo = 0;
+             if ($transitCode) {
+@@ -9451,7 +9451,16 @@
+         $data['routes'] = $response['routes'];
+         $data['summary'] = $response['summary'];
+         $data['rowCount'] = $response['rowCount'];
+-        
++        $data['login_branch'] = $this->session->userdata('org_code');
++        $odoDetails = $this->api_model->getTransitOdometer(array('transitCode' => $transitCode));
++        $odoDetails = json_decode($odoDetails);
++        foreach ($odoDetails->data as $row) {
++            if ($row->organization->code == $data['login_branch']) {
++                $data['odoDetails'] = $row;
++                break;
++            }
++        }
++
+         if (_get_namespace_id() == 'newlinetrans') {
+             $result = $this->api_model->getTransitIncomeExpense(array(
+                 'transitCode' => $transitCode
+@@ -9459,6 +9468,9 @@
+             $result = json_decode($result);
+             $data['expensesData'] = $result->data;
+         }
++        $vehicles = $this->api_model->getVehicle();
++        $vehicles = json_decode($vehicles);
++        $data['vehicles'] = $vehicles->data;
+ 
+         $data['cargo_setting'] = _get_cargo_settings();
+         $data['cargo_status'] = config_item('cargo_status');
+@@ -10122,9 +10134,19 @@
+ 
+         $data['cargo_setting'] = _get_cargo_settings();
+         $data['org_station_code']=$this->session->userdata('org_station_code');
++        $data['login_branch'] = $this->session->userdata('org_code');
++        $odoDetails = $this->api_model->getTransitOdometer(array('transitCode' => $transitCode));
++        $odoDetails = json_decode($odoDetails);
++        foreach ($odoDetails->data as $row) {
++            if ($row->organization->code == $data['login_branch']) {
++                $data['odoDetails'] = $row;
++                break;
++            }
++        }
+ 
+         $this->load->view('site/cargo/ogpl-unload-lr', $data);
+     }
++
+     public function ogpl_endtrip(){
+         $this->is_logged_in();
+         $req_data = array(
+@@ -14833,6 +14855,12 @@
+             $data['vehicleCode'] = $vehicleCode;
+         }
+ 
++        $vehicle_details=$this->api_model->get_vehicle_details($this->input->post('vehicleCode'));
++        $vehicle_details = json_decode($vehicle_details);
++        $data['vehicle_details'] =$vehicle_details->data;
++        // echo "<pre>";
++        // print_r($data['vehicle_details']);
++        // exit;
+         list($stations, $routes) = get_routes_and_stations();
+         $data['stations'] = $stations;
+         $data['login_organization'] = $this->session->userdata('org_code');
+@@ -17414,4 +17442,15 @@
+         echo json_encode($vendors->data);
+     }
+ 
++    public function get_ogpl_details(){
++        $this->is_logged_in();
++        $transitDetailsCode = $this->input->post('transitDetailsCode');
++
++        $transitdetails = $this->api_model->cargoOGPLTransitDetail(array(
++            'transitDetailCode' => $transitDetailsCode,
++        ));
++        $transitdetails = json_decode($transitdetails);
++        echo json_encode($transitdetails->data->transitCargo->code);
++    }
++
+ }

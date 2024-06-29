@@ -1,0 +1,9 @@
+#navigation #brand {
+    margin: 1px auto 0px 0!important;
+    padding: 1px 5px!important;
+    border-radius: 6px;
+}
+
+#navigation #brand img {
+    border-radius: 5px;
+}

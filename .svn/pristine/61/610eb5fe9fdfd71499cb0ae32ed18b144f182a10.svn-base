@@ -1,0 +1,14 @@
+{
+  "status": 1,
+  "data": {
+    "auth" : {
+      "allowDirectBitsLogin" : 0
+    },
+    "tripChart": {
+      "showSettlementFareOnly": 0,
+      "optionalVehicleAllocation": 1,
+      "gpsShareTripList": 0,
+      "gpsShareTripChart": 0
+    }
+  }
+}

@@ -1,0 +1,31 @@
+Index: application/views/site/cargo/booking.tpl
+===================================================================
+--- application/views/site/cargo/booking.tpl	(revision 5417)
++++ application/views/site/cargo/booking.tpl	(working copy)
+@@ -2440,7 +2440,7 @@
+     function hasRCMBasedGST() {
+         var senderGST = $.trim($('#sender_gst').val());
+         var receiverGST = $.trim($('#receiver_gst').val());
+-
++        var payment_type = getPaymentType();
+         if (cargoSetting.lrGstTaxModel == 'RCMGST') {
+             return isValidGstin(senderGST) && isValidGstin(receiverGST);
+         }
+@@ -2447,7 +2447,17 @@
+         if (cargoSetting.lrGstTaxModel == 'RCMEOGST') {
+             return isValidGstin(senderGST) || isValidGstin(receiverGST);
+         }
++        
++        if (cargoSetting.lrGstTaxModel == 'RCMPYGST') {
++            if (payment_type == 'PAD') {
++                return isValidGstin(senderGST);
++            }
+ 
++            if (payment_type == 'TOP') {
++                return isValidGstin(receiverGST);
++            }
++        }
++        
+         return false;
+     }
+ 

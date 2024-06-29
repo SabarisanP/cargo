@@ -1,0 +1,71 @@
+Index: application/views/site/cargo/booking-details.tpl
+===================================================================
+--- application/views/site/cargo/booking-details.tpl	(revision 5395)
++++ application/views/site/cargo/booking-details.tpl	(working copy)
+@@ -6908,6 +6908,7 @@
+ function lrHasRCMBasedGST(form = false) {
+     var senderGST = form ? $.trim($('#edit_sender_gstin').val()) : lrdata.fromCustomerGST;
+     var receiverGST = form ? $.trim($('#edit_receiver_gstin').val()) : lrdata.toCustomerGST;
++    var payment_type = lrdata.paymentType.code;
+ 
+     if (cargoSetting.lrGstTaxModel == 'RCMGST') {
+         return isValidGstin(senderGST) && isValidGstin(receiverGST);
+@@ -6916,6 +6917,15 @@
+         return isValidGstin(senderGST) || isValidGstin(receiverGST);
+     }
+ 
++    if (cargoSetting.lrGstTaxModel == 'RCMPYGST') {
++        if (payment_type == 'PAD') {
++            return isValidGstin(senderGST);
++        }
++        if (payment_type == 'TOP') {
++            return isValidGstin(receiverGST);
++        }
++    }
++
+     return false;
+ }
+ 
+Index: application/views/site/cargo/booking.tpl
+===================================================================
+--- application/views/site/cargo/booking.tpl	(revision 5395)
++++ application/views/site/cargo/booking.tpl	(working copy)
+@@ -2440,7 +2440,7 @@
+     function hasRCMBasedGST() {
+         var senderGST = $.trim($('#sender_gst').val());
+         var receiverGST = $.trim($('#receiver_gst').val());
+-
++        var payment_type = getPaymentType();
+         if (cargoSetting.lrGstTaxModel == 'RCMGST') {
+             return isValidGstin(senderGST) && isValidGstin(receiverGST);
+         }
+@@ -2447,7 +2447,17 @@
+         if (cargoSetting.lrGstTaxModel == 'RCMEOGST') {
+             return isValidGstin(senderGST) || isValidGstin(receiverGST);
+         }
++        
++        if (cargoSetting.lrGstTaxModel == 'RCMPYGST') {
++            if (payment_type == 'PAD') {
++                return isValidGstin(senderGST);
++            }
+ 
++            if (payment_type == 'TOP') {
++                return isValidGstin(receiverGST);
++            }
++        }
++        
+         return false;
+     }
+ 
+Index: application/views/site/cargo/cargo-settings.tpl
+===================================================================
+--- application/views/site/cargo/cargo-settings.tpl	(revision 5395)
++++ application/views/site/cargo/cargo-settings.tpl	(working copy)
+@@ -197,6 +197,7 @@
+                                                 <select id="lrGstTaxModel" class="form-control">
+                                                     <option value="RCMGST" {if $result->lrGstTaxModel == "RCMGST"}selected="selected"{/if}>RCMGST (Both sender and receiver)</option>
+                                                     <option value="RCMEOGST" {if $result->lrGstTaxModel == "RCMEOGST"}selected="selected"{/if}>RCMGST (Either sender or receiver)</option>
++                                                    <option value="RCMPYGST" {if $result->lrGstTaxModel == "RCMPYGST"}selected="selected"{/if}>RCMGST (Payment User Based)</option>
+                                                     <option value="GST" {if $result->lrGstTaxModel == "GST"}selected="selected"{/if}>GST</option>
+                                                 </select>
+                                             </div>

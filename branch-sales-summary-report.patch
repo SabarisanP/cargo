@@ -1,0 +1,420 @@
+Index: application/controllers/cargo.php
+===================================================================
+--- application/controllers/cargo.php	(revision 5331)
++++ application/controllers/cargo.php	(working copy)
+@@ -871,7 +871,10 @@
+                 $data['transactions_details'] = $val->transactionMode;
+             }
+         }
+-
++ 
++        // echo "<pre>";
++        // print_r($data);
++        // exit;
+         $this->load->view('site/cargo/booking-details', $data);
+     }
+ 
+@@ -4740,29 +4743,25 @@
+         $this->is_logged_in();
+         $data = array();
+         list($stations, $routes) = get_routes_and_stations();
+-    $data['stations'] = $stations;
++        $data['stations'] = $stations;
+ 
+-    $branches = $this->api_model->getOrganization();
+-    $branches = json_decode($branches);
+-    $branches = $branches->data;
++        $branches = $this->api_model->getOrganization();
++        $branches = json_decode($branches);
++        $branches = $branches->data;
+ 
+-    $organization = array();
+-    foreach ($branches as $branch) {
+-        $organization[$branch->code] = $branch->name;
+-    }
+-    asort($organization);
+-    $data['branches'] = $organization;
+-
+-    $data['cargo_status'] = config_item('cargo_status');
+-    $data['cargo_payment_status'] = config_item('cargo_payment_status');
+-
+-        
++        $organization = array();
++        foreach ($branches as $branch) {
++            $organization[$branch->code] = $branch->name;
++        }
++        asort($organization);
++        $data['branches'] = $organization;
++        $data['cargo_status'] = config_item('cargo_status');
++        $data['cargo_payment_status'] = config_item('cargo_payment_status');
+         $this->load->view('site/cargo/delivery-ledger-report', $data);
+-}
++    }   
+ 
+ 
+-public function delivery_ledger_report_list()
+-    {
++    public function delivery_ledger_report_list(){
+         $this->is_logged_in();
+         $user_code = $this->input->post('userCode');
+         if (empty($user_code)) {
+@@ -4772,8 +4771,6 @@
+         $from_date = date('Y-m-d', strtotime($fromDate));
+         $to_date = date('Y-m-d', strtotime($toDate));
+ 
+-
+-
+         $findOgplCode = $this->input->post('code');
+         $ogplcargo = "";
+         $odometer = "";
+@@ -4865,8 +4862,6 @@
+         $data['toDate'] = date('d-m-Y', strtotime($toDate));
+         $data['user_profile'] = $usr_pro->data;
+         $data['organizationDetails']  = $organizationDetails->data;
+-
+-
+         foreach ($singleOgpl as $row) {
+             if ($row->cargo_status_code == 'CA' || $row->cargo_status_code == 'CR') {
+                 continue;
+@@ -4885,7 +4880,7 @@
+             $delivery_details[$row->delivery_type_code]['count'] += 1;
+             $delivery_details[$row->delivery_type_code]['amount'] += $row->total_transaction_amount;
+         
+-    }
++        }
+     
+         $data['singleOgpl'] = $singleOgpl;
+         $data['payment_details'] = $payment_details;
+@@ -4911,7 +4906,6 @@
+             echo $content;
+             die;
+         } else if ($this->input->post('print') == 1) {
+-
+             $this->load->exclude_template();
+             if ($this->session->userdata('namespace_id') == "seenutrans" || $this->session->userdata('namespace_id') == "seenutransport") {
+                 $this->load->view('site/cargo/delivery-report-print-seenutransport', $data);
+@@ -4923,9 +4917,6 @@
+         }
+     }
+ 
+-
+-
+-
+     public function delivery_report_list_tally() {
+         $this->is_logged_in();
+         $this->load->library('excel');
+@@ -8077,7 +8068,7 @@
+         $branches = $this->api_model->getCargoOrganization();
+         $branches = json_decode($branches);
+         $data['branches'] = $branches->data;
+-
++        
+         $ownershipTypes = array();
+         foreach ($vehicles->data as $vehicle) {
+             $ownershipTypes[$vehicle->ownershipType->code] = $vehicle->ownershipType->name;
+@@ -8605,14 +8596,12 @@
+                 return;
+             }
+         }
++
++        $fromOrganization = $this->input->post('fromOrganization');
+         $toOrganization = $this->input->post('toOrganization');
+-
+-        if(isset($toOrganization)){
+-            $toOrganization= $toOrganization['code'];
+-        }else{
+-            $toOrganization=array('code' => $this->session->userdata('org_code'));
+-        }
+-
++        $fromOrganizationCode = isset($fromOrganization['code']) ? $fromOrganization['code'] : 'NA';
++        $toOrganizationCode = isset($toOrganization['code']) ? $toOrganization['code'] : 'NA';
++            
+         $ogpl = $this->api_model->cargoOGPLupdate(array(
+             'activeFlag' => $this->input->post('activeFlag'),
+             'code' => $this->input->post('code') ?: '',
+@@ -8619,8 +8608,8 @@
+             'name' => $this->input->post('name'),
+             'fromStation' => $this->input->post('fromStation'),
+             'toStation' => $this->input->post('toStation'),
+-            'fromOrganization' => array('code' => $this->session->userdata('org_code')),
+-            'toOrganization' => array('code' => $toOrganization),
++            'fromOrganization' => array('code' => $fromOrganizationCode?$fromOrganizationCode:"NA"),
++            'toOrganization' => array('code' => $toOrganizationCode?$toOrganizationCode:"NA"),
+             'viaStations' => $this->input->post('viaStations') ?: [],
+             'viaZones' => $this->input->post('viaZones') ?: [],
+             'hubViaStations' => $this->input->post('linkLoadStations') ?: [],
+@@ -9430,11 +9419,21 @@
+ 
+     public function ogpl_chart_details() {
+         $this->is_logged_in();
+-
++        $data['login_user'] = $this->session->userdata('user_id');
+         $transitCode = $this->input->get('transitCode');
+         $transitType = $this->input->get('transitType');
+         $this->session->set_userdata('ogpl_last_active', $transitCode);
+-
++        $data['login_branch'] = $this->session->userdata('org_code');
++        $odoDetails = $this->api_model->getTransitOdometer(array(
++            'transitCode' => $transitCode
++        ));
++        $odoDetails = json_decode($odoDetails);
++        foreach ($odoDetails->data as $row) {
++            if ($row->organization->code == $data['login_branch']) {
++                $data['odoDetails'] = $row;
++                break;
++            }
++        }
+         $ogpl = $this->api_model->cargoOGPLDetails(array(
+             'transitCode' => $transitCode
+         ));
+@@ -9441,6 +9440,9 @@
+         $ogpl = json_decode($ogpl);
+         $data['ogpl'] = $ogpl->data;
+         $organizationCode = $this->session->userdata('org_code'); 
++        $vehicles = $this->api_model->getVehicle();
++        $vehicles = json_decode($vehicles);
++        $data['vehicles']=$vehicles->data;
+ 
+         $response = $this->helper_model->view_chart($transitType,array(
+             'queryCode' => 'RQJ45G4144',
+@@ -9456,6 +9458,9 @@
+         $data['result'] = $response['list'];
+         $data['routes'] = $response['routes'];
+         $data['summary'] = $response['summary'];
++        // echo "<pre>";
++        // print_r($response);
++        // exit;
+         $data['rowCount'] = $response['rowCount'];
+         
+         if (_get_namespace_id() == 'newlinetrans') {
+@@ -9522,7 +9527,7 @@
+             $data['namespaceCode'] = $this->session->userdata('namespace_id');
+             $this->load->view('site/cargo/ogpl-chart-cityparcel', $data);
+         } else {
+-        $this->load->view('site/cargo/ogpl-chart', $data);
++            $this->load->view('site/cargo/ogpl-chart', $data);
+         }
+     }
+ 
+@@ -9960,7 +9965,9 @@
+                 $odometer[$row->transitCargo->cargoActivityType->code][$row->fromStation->name] = $row;
+             }
+             $data['odoDetails'] = $odometer;
+-            
++            // echo"<pre>";
++            // print_r($odometer);
++            // exit; 
+             $this->load->view('site/cargo/out-for-delivery-hire-challan-print-seenutransport', $data);
+         }
+     }
+@@ -13680,7 +13687,9 @@
+         $data['cargo_status'] = config_item('cargo_status');
+         $data['cargo_payment_status'] = config_item('cargo_payment_status');
+         $data['delivery_type_codes'] = config_item('delivery_type_codes');
+-
++        // echo "<pre>";
++        // print_r($data);
++        // exit;
+         if ($this->input->post('export') == 1) {
+             $filename = lang('ogpl') . 'Report';
+             $this->load->excel('site/cargo/ogpl-report-list-xls', $data, $filename);
+@@ -16859,9 +16868,37 @@
+     // https://github.com/JavakarBits/Cargo/issues/207
+     public function branch_sales_summary() {
+         $this->is_logged_in();
++        $all_zone = $this->api_model->getAllZone();
++        $zone = json_decode($all_zone);
++        $data['zone'] = $zone->data;
+ 
++        list($stations, $routes) = get_routes_and_stations();
++        $data['stations'] = $stations;
++
++        $all_zone_stations = array();
++        foreach($zone->data as $key=>$zones) {
++            foreach($zones->stations as $k=>$station) {
++                $all_zone_stations[] = $station->code;
++            }
++        }
++        
+         $branches = $this->api_model->getOrganization();
+         $branches = json_decode($branches);
++
++        $organization = array();
++        foreach ($branches->data as $key=>$branch) {
++            if (in_array($branch->station->code, $all_zone_stations)) {
++                $organization[] = $branch;
++            }
++        }
++
++        usort($organization, function ($a, $b) {
++            return strcasecmp($a->name,  $b->name);
++        });
++        $data['organization'] = $organization;
++        
++        $branches = $this->api_model->getOrganization();
++        $branches = json_decode($branches);
+         if (is_array($branches->data)) {
+             usort($branches->data, function($a, $b) {
+                 return $a->name < $b->name ? -1 : 1;
+@@ -16875,15 +16912,19 @@
+ 
+     public function branch_sales_summary_list(){
+         $this->is_logged_in();
++        
++        list($fromDate, $toDate) = explode(' | ', $this->input->post('dateRange'));
++        $from_date = date('Y-m-d', strtotime($fromDate));
++        $to_date = date('Y-m-d', strtotime($toDate));
+         $data = array(
+             'queryCode' => 'RQL3U0474',
+-            'fromDate' => $this->input->post('from') ?: 'NA',
+-            'toDate' => $this->input->post('to') ?: 'NA',
++            'fromDate' => $from_date ?: 'NA',
++            'toDate' => $to_date ?: 'NA',  
++            'zoneCode' => $this->input->post('zoneCode'),
++            'stationCode' => $this->input->post('stationCode'),
+             'organizationCode' => $this->input->post('organizationCode')
+         );
+-        // if (!has_action_rights('CGO-BR-DUE-ALL-BRAH')) {
+-        //     $data['organizationCode'] = $this->session->userdata('org_code');
+-        // }
++        
+ 
+         $result = $this->api_model->getDynamicReportDataWithMap($data);
+         $result = json_decode($result);
+@@ -16927,6 +16968,20 @@
+         $data['cargo_payment_status'] = config_item('cargo_payment_status');
+ 
+         if ($this->input->post('export') == 1) {
++            // $this->load->exclude_template();
++            // $content = $this->load->view('site/cargo/branch-sales-summary-list-xls', $data, true);
++            // header('Content-Description: File Transfer');
++            // header('Content-Type: application/octet-stream');
++            // header('Content-Disposition: attachment; filename=Branch-Sales-Summary.xls');
++            // header('Content-Transfer-Encoding: binary');
++            // header('Expires: 0');
++            // header('Cache-Control: must-revalidate');
++            // header('Pragma: public');
++            // header('Content-Length: ' . strlen($content));
++            // ob_clean();
++            // flush();
++            // echo $content;
++            // die;
+             $filename = 'Branch-Sales-Summary';
+             $this->load->excel('site/cargo/branch-sales-summary-list-xls', $data, $filename);
+         } else {
+Index: application/views/site/cargo/branch-sales-summary-list-xls.tpl
+===================================================================
+--- application/views/site/cargo/branch-sales-summary-list-xls.tpl	(revision 5331)
++++ application/views/site/cargo/branch-sales-summary-list-xls.tpl	(working copy)
+@@ -16,6 +16,8 @@
+     <thead>
+         <tr>
+             <td align="center">Date</td>
++            <td align="center">No Of Lrs</td>
++            <td align="center">No Of Art</td>
+             <td align="center">Freight Amount <br>(A)</td>
+             <td align="center">Pass Charge <br>(B)</td>
+             <td align="center">Loading Charges <br>(C)</td>
+@@ -25,6 +27,8 @@
+             <td align="center">SGST <br>(G)</td>
+             <td align="center">CGST <br>(H)</td>
+             <td align="center">IGST <br>(I)</td>
++            <td align="center">Docket Charges <br>(J)</td>
++            <td align="center">Round Off <br>(K)</td>
+             <td align="center">Total <br>(F2 = F1+G+H+I)</td>
+             <td align="center">Paid</td>
+             <td align="center">Topay</td>
+@@ -35,6 +39,8 @@
+         {foreach item=row from=$result}
+             <tr>
+                 <td align="left" nowrap>{$row['booked_at']|date_format:$ns_date_format}</td>
++                <td align="right" data-format="{$xlformat['currency']}">{$row['cargo_count']|sigma:$t_cargo_amount}</td>
++                <td align="right" data-format="{$xlformat['currency']}">{$row['total_item_count']|sigma:$t_item_count}</td>
+                 <td align="right" data-format="{$xlformat['currency']}">{$row['total_amount']|sigma:$t_total_amount}</td>
+                 <td align="right" data-format="{$xlformat['currency']}">{$row['pass_charge']|sigma:$t_pass_charge}</td>
+                 <td align="right" data-format="{$xlformat['currency']}">{$row['total_handling_amount']|sigma:$t_total_handling_amount}</td>
+@@ -44,6 +50,8 @@
+                 <td align="right" data-format="{$xlformat['currency']}">{$row['sgst']|sigma:$t_sgst}</td>
+                 <td align="right" data-format="{$xlformat['currency']}">{$row['cgst']|sigma:$t_cgst}</td>
+                 <td align="right" data-format="{$xlformat['currency']}">{$row['igst']|sigma:$t_igst}</td>
++                <td align="right" data-format="{$xlformat['currency']}">{$row['docket_charge']|sigma:$t_docket_ch}</td>
++                <td align="right" data-format="{$xlformat['currency']}">{$row['round_off_value']|sigma:$t_round}</td>
+                 <td align="right" data-format="{$xlformat['currency']}">{$row['net_total_amount']|sigma:$t_net_total_amount}</td>
+                 <td align="right" data-format="{$xlformat['currency']}">{$row['PAD']|default:0|sigma:$t_PAD}</td>
+                 <td align="right" data-format="{$xlformat['currency']}">{$row['TOP']|default:0|sigma:$t_TOP}</td>
+@@ -54,6 +62,8 @@
+             <tfoot>
+                 <tr class="active">
+                     <td align="right">Total</td>
++                    <td align="right" data-format="{$xlformat['currency']}">{$t_cargo_amount}</td>
++                    <td align="right" data-format="{$xlformat['currency']}">{$t_item_count}</td>
+                     <td align="right" data-format="{$xlformat['currency']}">{$t_total_amount}</td>
+                     <td align="right" data-format="{$xlformat['currency']}">{$t_pass_charge}</td>
+                     <td align="right" data-format="{$xlformat['currency']}">{$t_total_handling_amount}</td>
+@@ -63,6 +73,8 @@
+                     <td align="right" data-format="{$xlformat['currency']}">{$t_sgst}</td>
+                     <td align="right" data-format="{$xlformat['currency']}">{$t_cgst}</td>
+                     <td align="right" data-format="{$xlformat['currency']}">{$t_igst}</td>
++                    <td align="right" data-format="{$xlformat['currency']}">{$t_docket_ch}</td>
++                    <td align="right" data-format="{$xlformat['currency']}">{$t_round}</td>
+                     <td align="right" data-format="{$xlformat['currency']}">{$t_net_total_amount}</td>
+                     <td align="right" data-format="{$xlformat['currency']}">{$t_PAD|default:0}</td>
+                     <td align="right" data-format="{$xlformat['currency']}">{$t_TOP|default:0}</td>
+Index: application/views/site/cargo/branch-sales-summary-list.tpl
+===================================================================
+--- application/views/site/cargo/branch-sales-summary-list.tpl	(revision 5331)
++++ application/views/site/cargo/branch-sales-summary-list.tpl	(working copy)
+@@ -17,6 +17,8 @@
+     <thead>
+         <tr class="success">
+             <td align="center">Date</td>
++            <td align="center">No Of Lrs</td>
++            <td align="center">No Of Art</td>
+             <td align="center">Freight Amount <br>(A)</td>
+             <td align="center">Pass Charge <br>(B)</td>
+             <td align="center">Loading Charges <br>(C)</td>
+@@ -26,6 +28,8 @@
+             <td align="center">SGST <br>(G)</td>
+             <td align="center">CGST <br>(H)</td>
+             <td align="center">IGST <br>(I)</td>
++            <td align="center">Docket Charges <br>(J)</td>
++            <td align="center">Round Off <br>(K)</td>
+             <td align="center">Total <br>(F2 = F1+G+H+I)</td>
+             <td align="center">Paid</td>
+             <td align="center">Topay</td>
+@@ -36,6 +40,8 @@
+         {foreach item=row from=$result}
+             <tr>
+                 <td align="left" nowrap>{$row['booked_at']|date_format:$ns_date_format}</td>
++                <td align="right">{$row['cargo_count']|sigma:$t_cargo_amount|inr_format}</td>
++                <td align="right">{$row['total_item_count']|sigma:$t_item_count|inr_format}</td>
+                 <td align="right">{$row['total_amount']|sigma:$t_total_amount|inr_format}</td>
+                 <td align="right">{$row['pass_charge']|sigma:$t_pass_charge|inr_format}</td>
+                 <td align="right">{$row['total_handling_amount']|sigma:$t_total_handling_amount|inr_format}</td>
+@@ -45,6 +51,8 @@
+                 <td align="right">{$row['sgst']|sigma:$t_sgst|inr_format}</td>
+                 <td align="right">{$row['cgst']|sigma:$t_cgst|inr_format}</td>
+                 <td align="right">{$row['igst']|sigma:$t_igst|inr_format}</td>
++                <td align="right">{$row['docket_charge']|sigma:$t_docket_ch|inr_format}</td>
++                <td align="right">{$row['round_off_value']|sigma:$t_round|inr_format}</td>
+                 <td align="right">{$row['net_total_amount']|sigma:$t_net_total_amount|inr_format}</td>
+                 <td align="right">{$row['PAD']|default:0|sigma:$t_PAD|inr_format}</td>
+                 <td align="right">{$row['TOP']|default:0|sigma:$t_TOP|inr_format}</td>
+@@ -54,6 +62,8 @@
+         {if $result|count > 1}
+             <tr class="active bold">
+                 <td align="right">Total</td>
++                <td align="right">{$t_cargo_amount|inr_format}</td>
++                <td align="right">{$t_item_count|inr_format}</td>
+                 <td align="right">{$t_total_amount|inr_format}</td>
+                 <td align="right">{$t_pass_charge|inr_format}</td>
+                 <td align="right">{$t_total_handling_amount|inr_format}</td>
+@@ -63,6 +73,8 @@
+                 <td align="right">{$t_sgst|inr_format}</td>
+                 <td align="right">{$t_cgst|inr_format}</td>
+                 <td align="right">{$t_igst|inr_format}</td>
++                <td align="right">{$t_docket_ch|inr_format}</td>
++                <td align="right">{$t_round|inr_format}</td>
+                 <td align="right">{$t_net_total_amount|inr_format}</td>
+                 <td align="right">{$t_PAD|default:0|inr_format}</td>
+                 <td align="right">{$t_TOP|default:0|inr_format}</td>

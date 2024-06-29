@@ -1,0 +1,209 @@
+Index: application/controllers/cargo.php
+===================================================================
+--- application/controllers/cargo.php	(revision 5417)
++++ application/controllers/cargo.php	(working copy)
+@@ -5342,6 +5342,9 @@
+         $data['cargo_setting'] = _get_cargo_settings();
+         $data['cargo_payment_status'] = config_item('pay_type');
+ 
++        list($stations, $routes) = get_routes_and_stations();
++        $data['stations'] = $stations;
++
+         echo $this->load->view('site/cargo/users', $data);
+     }
+ 
+@@ -5407,6 +5410,51 @@
+         echo $this->api_model->addCargoUserCommissions($data);
+     }
+ 
++    function update_cargo_station_user_commissions() {
++        $this->is_logged_in();
++        $code = $this->input->post('code');
++        $activeflag = $this->input->post('activeFlag');
++        $data = array(
++            'userCode' => $this->input->post('userCode'),
++            'paidCommissionValue' => $this->input->post('paidCommissionValue'),
++            'toPayCommissionValue' => $this->input->post('toPayCommissionValue'),
++            'accPayCommissionValue' => $this->input->post('accPayCommissionValue'),
++            'loadingCommissionValue' => $this->input->post('loadingCommissionValue'),
++            'unloadingCommissionValue' => $this->input->post('unloadingCommissionValue'),
++            'delivaryCommissionValue' => $this->input->post('delivaryCommissionValue'),
++            'delivaryTopayCommissionValue' => $this->input->post('delivaryTopayCommissionValue'),
++            'delivaryPaidCommissionValue' => $this->input->post('delivaryPaidCommissionValue'),
++            'delivaryAccpayCommissionValue' => $this->input->post('delivaryAccpayCommissionValue'),
++            'doorPickupCommissionValue' => $this->input->post('doorPickupCommissionValue')?: '0',
++            'doorDeliveryCommissionValue' => $this->input->post('doorDeliveryCommissionValue')?: '0',
++            'paidCommissionTypeCode' => $this->input->post('paidCommissionTypeCode'),
++            'toPayCommissionTypeCode' => $this->input->post('toPayCommissionTypeCode'),
++            'accPayCommissionTypeCode' => $this->input->post('accPayCommissionTypeCode'),
++            'loadingCommissionTypeCode' => $this->input->post('loadingCommissionTypeCode'),
++            'unloadingCommissionTypeCode' => $this->input->post('unloadingCommissionTypeCode'),
++            'deliveryTopayCommissionTypeCode' => $this->input->post('deliveryTopayCommissionTypeCode'),
++            'deliveryPaidCommissionTypeCode' => $this->input->post('deliveryPaidCommissionTypeCode'),
++            'deliveryAccpayCommissionTypeCode' => $this->input->post('deliveryAccpayCommissionTypeCode'),
++            'doorPickupCommissionTypeCode' => $this->input->post('doorPickupCommissionTypeCode'),
++            'doorDeliveryCommissionTypeCode' => $this->input->post('doorDeliveryCommissionTypeCode'),
++            'creditLimit' => $this->input->post('creditLimit')?: '0',
++            'captureCommissionFlag' => $this->input->post('captureCommissionFlag')?: '0',
++            'stations' => $this->input->post('toStations'),
++            'state'=> array('activeFlag' =>1),
++            'commissionValueType' => array('code' => 'PER')
++        );
++
++        if (!empty($code)) {
++            $data['code'] = $code;
++        }
++
++        if (!empty($activeflag)) {
++            $data['activeFlag'] = $activeflag;
++        }
++        echo $this->api_model->addCargoUserCommissions($data);
++    }
++
++
+     function sms_lr_details() {
+         $this->is_logged_in();
+         $data = array(
+@@ -8663,14 +8711,12 @@
+                 return;
+             }
+         }
++
++        $fromOrganization = $this->input->post('fromOrganization');
+         $toOrganization = $this->input->post('toOrganization');
++        $fromOrganizationCode = isset($fromOrganization['code']) ? $fromOrganization['code'] : 'NA';
++        $toOrganizationCode = isset($toOrganization['code']) ? $toOrganization['code'] : 'NA';
+ 
+-        if(isset($toOrganization)){
+-            $toOrganization= $toOrganization['code'];
+-        }else{
+-            $toOrganization=array('code' => $this->session->userdata('org_code'));
+-        }
+-
+         $ogpl = $this->api_model->cargoOGPLupdate(array(
+             'activeFlag' => $this->input->post('activeFlag'),
+             'code' => $this->input->post('code') ?: '',
+@@ -8677,8 +8723,8 @@
+             'name' => $this->input->post('name'),
+             'fromStation' => $this->input->post('fromStation'),
+             'toStation' => $this->input->post('toStation'),
+-            'fromOrganization' => array('code' => $this->session->userdata('org_code')),
+-            'toOrganization' => array('code' => $toOrganization),
++            'fromOrganization' => array('code' =>$fromOrganizationCode?$fromOrganizationCode:"NA" ),
++            'toOrganization' => array('code' => $toOrganizationCode?$toOrganizationCode:"NA"),
+             'viaStations' => $this->input->post('viaStations') ?: [],
+             'viaZones' => $this->input->post('viaZones') ?: [],
+             'hubViaStations' => $this->input->post('linkLoadStations') ?: [],
+@@ -8726,8 +8772,8 @@
+                 'transitDetailsType' => array('code' => 'DFLT'),
+                 'toStation' => array('code' => $row['to']),
+                 'fromStation' => array('code' => $row['from']),
+-                'fromOrganization' => array('code' => $row['oldTransitOrg']),
+-                'toOrganization' => array('code' => $row['transitOrganization']),
++                'fromOrganization' => array('code' => $fromOrganizationCode?$fromOrganizationCode:"NA" ),
++                'toOrganization' => array('code' => $toOrganizationCode?$toOrganizationCode:"NA"),
+                 'transitCargo' => array('code' => $ogpl->data->code),
+                 'transitOrganization' => array('code' => $row['transitOrganization']),
+                 'cargoList' => $codes
+@@ -8757,8 +8803,8 @@
+                 'transitDetailsType' => array('code' => 'HULD'),
+                 'toStation' => array('code' => $row['to']),
+                 'fromStation' => array('code' => $row['from']),
+-                'fromOrganization' => array('code' => $row['oldTransitOrg']),
+-                'toOrganization' => array('code' => $row['transitOrganization']),
++                'fromOrganization' => array('code' => $fromOrganizationCode?$fromOrganizationCode:"NA"), 
++                'toOrganization' => array('code' => $toOrganizationCode?$toOrganizationCode:"NA"),
+                 'transitCargo' => array('code' => $ogpl->data->code),
+                 'transitOrganization' => array('code' => $row['transitOrganization']),
+                 'cargoList' => $codes
+@@ -8788,8 +8834,8 @@
+                 'transitDetailsType' => array('code' => 'LCLD'),
+                 'toStation' => array('code' => $row['to']),
+                 'fromStation' => array('code' => $row['from']),
+-                'fromOrganization' => array('code' => $row['oldTransitOrg']),
+-                'toOrganization' => array('code' => $row['transitOrganization']),
++                'fromOrganization' => array('code' =>$fromOrganizationCode?$fromOrganizationCode:"NA" ),
++                'toOrganization' => array('code' =>$toOrganizationCode?$toOrganizationCode:"NA"),
+                 'transitCargo' => array('code' => $ogpl->data->code),
+                 'transitOrganization' => array('code' => $row['transitOrganization']),
+                 'cargoList' => $codes
+@@ -8819,8 +8865,8 @@
+                 'transitDetailsType' => array('code' => 'OFDLD'),
+                 'toStation' => array('code' => $row['to']),
+                 'fromStation' => array('code' => $row['from']),
+-                'fromOrganization' => array('code' => $row['oldTransitOrg']),
+-                'toOrganization' => array('code' => $row['transitOrganization']),
++                'fromOrganization' => array('code' => $fromOrganizationCode?$fromOrganizationCode:"NA"),
++                'toOrganization' => array('code' => $toOrganizationCode?$toOrganizationCode:"NA"),
+                 'transitCargo' => array('code' => $ogpl->data->code),
+                 'transitOrganization' => array('code' => $row['transitOrganization']),
+                 'cargoList' => $codes
+@@ -9368,8 +9414,8 @@
+             'name' => $this->input->post('name'),
+             'fromStation' => $this->input->post('fromStation'),
+             'toStation' => $this->input->post('toStation'),
+-            'fromOrganization' => array('code' => $this->session->userdata('org_code')),
+-            'toOrganization' => array('code' => $this->session->userdata('org_code')),
++            'fromOrganization' => $this->input->post('fromOrganization'),
++            'toOrganization' => $this->input->post('toOrganization'),
+             'viaStations' => $this->input->post('viaStations') ?: [],
+             'localViaOrganizations' => $this->input->post('localViaOrganizations') ?: [],
+             'hubViaStations' => $this->input->post('hubViaStations') ?: [],
+@@ -13806,7 +13852,10 @@
+         $this->excel->getActiveSheet()->getColumnDimension('O')->setAutoSize(true);
+         $this->excel->getActiveSheet()->getColumnDimension('P')->setAutoSize(true);
+         $this->excel->getActiveSheet()->getColumnDimension('Q')->setAutoSize(true);
++        $this->excel->getActiveSheet()->getColumnDimension('R')->setAutoSize(true);
++        $this->excel->getActiveSheet()->getColumnDimension('S')->setAutoSize(true);
+ 
++
+         list($fromDate, $toDate) = explode(' | ', $this->input->post('dateRange'));
+         if ($this->input->post('export') == 1) {
+             $from_date = date('Y-m-d', strtotime($fromDate));
+@@ -13845,6 +13894,8 @@
+         $this->excel->getActiveSheet()->setCellValue('O1', 'LOAD');
+         $this->excel->getActiveSheet()->setCellValue('P1', 'CONAMT');
+         $this->excel->getActiveSheet()->setCellValue('Q1', 'CONBRID');
++        $this->excel->getActiveSheet()->setCellValue('R1', 'SERTAX');
++        $this->excel->getActiveSheet()->setCellValue('S1', 'OTCHR');
+ 
+         if ($result->status == 1) {
+             if (is_array($result->data)) {
+@@ -13882,6 +13933,8 @@
+                     $this->excel->getActiveSheet()->setCellValueByColumnAndRow(++$col, $row, $t->total_handling_amount);
+                     $this->excel->getActiveSheet()->setCellValueByColumnAndRow(++$col, $row, $t->connecting_charge);
+                     $this->excel->getActiveSheet()->setCellValueByColumnAndRow(++$col, $row, $con_id);
++                    $this->excel->getActiveSheet()->setCellValueByColumnAndRow(++$col, $row, $t->service_tax);
++                    $this->excel->getActiveSheet()->setCellValueByColumnAndRow(++$col, $row, $t->other_charges);
+                     
+                     $col = 0;
+                     $row++;
+@@ -13889,7 +13942,7 @@
+             }
+         }
+ 
+-        $filename = 'Ogpl Report-'.$this->input->post('fromDate').' TO '.$this->input->post('toDate').'.xls';
++        $filename = 'Ogpl Report-'.$from_date.' TO '.$to_date.'.xls';
+         header('Content-Type: application/vnd.ms-excel');
+         header('Content-Disposition: attachment;filename="'.$filename.'"');
+         header('Cache-Control: max-age=0');
+@@ -15045,6 +15098,8 @@
+         $branchContact = json_decode($branchContact);
+         $data['branchContact'] = $branchContact->data;
+         $data['f_t_mode'] = config_item('transaction_mode');
++        $data['loadbranchs']= $transitList[0]->transitCargoDetails;
++        
+         $this->load->view('site/cargo/search-ogplv2', $data);
+     }
+ 
+@@ -17036,7 +17091,9 @@
+             $list[$row->booked_at][$row->from_organization_code]['net_total_amount'] += $net_total_amount;
+             $list[$row->booked_at][$row->from_organization_code][$row->payment_status] += $net_amount - $row->pass_charge;
+         }
+-
++        // echo "<pre>";
++        // print_r($list);
++        // exit;
+         ksort($list);
+         
+         $data['result'] = $list;

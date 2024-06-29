@@ -1,0 +1,15 @@
+body{ font-size: 14px; }
+#navigation #brand { margin-top: 15px !important; }
+.heading_b{font-weight: 600; }
+.form-control{ font-size: 14px; font-weight: 600;}
+.stat_name{ font-size: 14px !important; }
+#navigation .main-nav > li > a{ font-size: 16px; font-weight: 600; padding: 15px 15px !important; }
+.dropdown-menu > li > a { font-size: 16px !important; }
+.select2-results .select2-result-label { font-size: 14px; font-weight: 600; }
+.scroller .header{ font-size: 110%; }
+.trip-list{ font-size: 110%; }
+.seat-lay-search{ font-size: 14px; }
+label, .well{font-size: 14px !important;}
+.btn{ font-size: 14px; }
+.label-product{ display:none;}
+.brand_top{ margin-top: 10px !important; }

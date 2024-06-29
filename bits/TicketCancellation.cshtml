@@ -1,0 +1,395 @@
+﻿@model  Ezee.TicketBooking.Client.Model.CancelTicket
+@{ 
+    var cancelCode  = "CA";
+}
+<html>
+<head>
+    <title>Print Ticket</title>
+    <link href="http://www.ezeebits.com/assets/icons/font-awesome/css/font-awesome.min.css?4" rel="stylesheet">
+
+    <style>
+        * {
+            font: normal 13px/20px arial;
+        }
+
+        strong {
+            font-weight: bold;
+        }
+
+        .border-top {
+            border-top: 1px solid #ccc;
+        }
+
+        .grid {
+            border: solid #ccc;
+            border-width: 1px 0 0 1px !important;
+        }
+
+            .grid th, .grid td {
+                border: solid #ccc !important;
+                border-width: 0 1px 1px 0 !important;
+            }
+
+        .cancelled-seat {
+            text-decoration: line-through;
+        }
+    </style>
+
+</head>
+<body>
+    <div id="rpt_lsts"  >
+
+        <div class="clear_fix_both"></div>
+        <div class="row">
+            <div class="col-sm-2">
+                <div class="bold">PNR</div>
+                @Model.code &nbsp;<i class="fa fa-desktop"></i>
+            </div>
+
+            <div class="col-sm-2">
+                <div class="bold">Travel Date</div>
+               @Model.travelTime
+            </div>
+
+            <div class="col-sm-4 col-md-3">
+                <div class="bold">Route</div>
+                @Model.fromStation.name - @Model.toStation.name
+                
+            </div>
+            <div class="col-sm-4 col-md-3">
+                <div class="bold">Bus Type</div>
+                @Model.bus.name
+            </div>
+
+        </div>
+        <br>
+
+        <div class="row">
+            <div class="col-sm-2">
+                <div class="bold">Passenger Mobile</div>
+                @Model.passegerMobleNo
+            </div>
+
+            <div class="col-sm-2">
+                <div class="bold">Booked By</div>
+                @Model.user.name @Model.transactionDate
+            </div>
+
+            <div class="col-sm-6 col-md-6">
+                <div class="bold">Remarks</div>
+
+            </div>
+
+        </div>
+
+        <br>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="bold">Transaction Id</div>
+
+            </div>
+        </div>
+
+
+
+        <div>
+            <div class="table-responsive">
+                <table id="dt_report_table" class="table" style="border:1px solid #dddddd;">
+                    <thead>
+                        <tr bgcolor="#F5F5F5">
+
+                            <th style="border:1px solid #dddddd">Passenger Name</th>
+                            <th style="border:1px solid #dddddd;text-align:center ">Seat No</th>
+                            <th style="border:1px solid #dddddd;text-align:center ">Gender</th>
+                            <th style="border:1px solid #dddddd;text-align:center ">Age</th>
+                            <th style="border:1px solid #dddddd;text-align:center ">Status</th>
+                            <th style="border:1px solid #dddddd;text-align:center ">Fare</th>
+                            <th style="border:1px solid #dddddd">Service Tax</th>
+                            <th style="border:1px solid #dddddd;text-align:center ">Refund Amount</th>
+                            <th style="border:1px solid #dddddd;text-align:center ">Cancellation Charge</th>
+                            <th style="border:1px solid #dddddd">Select</th>
+                        </tr>
+                    </thead>
+                    <tbody class="body_table">
+                        @foreach (Ezee.TicketBooking.Client.Model.CancelTicketDetail ctd in Model.ticketDetails)
+                        {
+                        <tr id="seat-@ctd.seatCode" class="@(ctd.seatStatus.code == cancelCode ? "cancelled-seat":"")" data-seat="@ctd.seatStatus.code" data-ticket="BO">
+                            <td style="border:1px solid #dddddd">@ctd.passengerName</td>
+                            <td style="border:1px solid #dddddd" align="center">@ctd.seatName</td>
+                            <td style="border:1px solid #dddddd" align="center">@ctd.passengerGendar</td>
+                            <td style="border:1px solid #dddddd" align="center">@ctd.passengerGendar</td>
+                            <td style="">@ctd.seatStatus.name</td>
+                            <td style="border:1px solid #dddddd" align="right">@ctd.seatFare</td>
+                            <td style="border:1px solid #dddddd" align="right">@ctd.serviceTax</td>
+                            <td style="border:1px solid #dddddd" align="right">@ctd.refundAmount</td>
+                            <td style="border:1px solid #dddddd" align="right">@ctd.cancellationCharges</td>
+                            <td style="border:1px solid #dddddd" align="center">
+                                @(ctd.seatStatus.code  == cancelCode ? "-" : "< input type = \"checkbox\" class=\"pnr_user\" id=\"pnr_user\" name=\"pnr_user[]\" value=\"" +ctd.seatCode+","+ ctd.refundAmount +","+ ctd.serviceTax + "\">")
+                            </td>
+                            <input type="hidden" value="" id="refund">
+                            <input type="hidden" value="@Model.code" id="pnr_code">
+
+                        </tr>
+                        }
+  
+
+                        <tr>
+                            <td colspan="9" align="right"> Service Tax :</td>
+                            <td align="right"> + 72.00</td>
+                        </tr>
+
+
+
+
+
+
+                        <tr>
+                            <td colspan="9" align="right"> Total :</td>
+                            <td align="right"> 1,272.00 </td>
+                        </tr>
+
+
+                    </tbody>
+                </table>
+            </div>
+            <div id="can_lst"></div>
+        </div>
+        <input type="hidden" id="ref_txt">
+        <div class="pull-right col-md-4 text-right" id="total_amts" style="display: none;">
+            <b>Seat Amount</b> : <i class="fa fa-inr"></i>&nbsp;<span id="refund_total">0</span>
+            <br>
+            <b>Service Tax</b> : <i class="fa fa-inr"></i>&nbsp;<span id="service_tax">0</span>
+        </div>
+        <br>
+
+        <div class="clear_fix_both"></div>
+        <div class="text-right pull-right" id="refund_text">
+            <br>
+            <div class="pull-left bold" style="padding-top: 8px">Override Refund Amount :&nbsp;</div>
+            <div class="pull-left"><input type="text" name="amount" class="form-control" id="amount" style="width: 100px" placeholder=""></div>
+        </div>
+        <br>
+        <div class="clearfix"></div>
+        <div class="alert cl_blk" id="refund_success">
+            <div class="text-right">
+                <b>Total Refund Amount</b> : <i class="fa fa-inr"></i>&nbsp;<span id="ref">0</span>
+            </div>
+
+            <div class="text-right">
+
+                <br>
+                <b>Cancel to my account</b>
+                <div class="switch switch-off switch-animate switch-id-cancel_flg switch-mini"><div><span class="switch-handle-on switch-primary">ON</span><label for="cancel_flg">&nbsp;</label><span class="switch-handle-off switch-default">OFF</span><input type="checkbox" id="cancel_flg" name="cancel_flg" class="bs_switch" data-size="small"></div></div>
+
+                <button class="btn btn-new btn-success hd_btn" type="button" onclick="confirmCancel('BO');">Confirm</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12 bold f14">
+                Cancellation Policy
+            </div>
+
+        </div>
+
+
+        <table class="table" style="margin-bottom: 13px;">
+            <thead>
+                <tr bgcolor="#F5F5F5">
+                    <td><strong>Timing</strong></td>
+                    <td><strong>Deduction</strong></td>
+                    <td><strong>Refund</strong></td>
+                    <td><strong>Charges</strong></td>
+                </tr>
+            </thead>
+            <tbody>
+
+               @foreach (Ezee.TicketBooking.Client.Model.PrnPolicyList dp in Model.cancellationTerms.policyList)
+                {
+                    <tr>
+                        <td>@dp.term</td>
+                        <td>@dp.deductionAmountTxt</td>
+                        <td> @dp.refundAmountTxt </td>
+                        <td>@dp.chargesTxt</td>
+                    </tr>
+                }
+
+
+            </tbody>
+        </table>
+
+
+
+
+
+
+
+
+
+        <script>
+            var base_url = '';
+            $(document).ready(function () {
+                $('#total_amts').hide();
+                $('#pnr').focus();
+                $(document).on('blur', '#amount', function () {
+                    var txt = $.trim($(this).val());
+                    if (txt != '') {
+                        $('#ref').html('');
+                        $('#ref').html(txt);
+                    }
+                });
+
+                $('input[name="pnr_user[]"]').change(function () {
+                    var val = [];
+                    var tax = [];
+                    if (this.checked) {
+                        $('#ref_txt').val('');
+                        var refund = $('#refund').val();
+                        var checkcount = $(":checkbox:checked").length;
+
+                        if (checkcount > 0) {
+                            $('.btn-new').show();
+                            $('#total_amts').show();
+                        } else {
+                            $('.btn-new').hide();
+                            $('#total_amts').hide();
+                        }
+                        $('#refund_text').show();
+
+
+                        $(':checkbox:checked').each(function (i) {
+
+                            var test = $(this).val();
+                            var value = test.split(',');
+                            var fare = value[1];
+                            val[i] = fare;
+                            var tax_pay = value[2];
+                            tax[i] = tax_pay;
+
+                        });
+
+                        var total = 0;
+                        for (var i = 0; i < val.length; i++) {
+                            total += val[i] << 0;
+                        }
+
+                        var total_tax = 0;
+                        $.each(tax, function () {
+                            total_tax += parseFloat(this) || 0;
+                        });
+
+
+
+                        var total_amt = total + total_tax;
+
+                        $('#refund_total').html(total);
+                        $('#service_tax').html(total_tax);
+                        $('#ref').html(total_amt);
+                        $('#ref_txt').val(total_amt);
+
+
+                    }
+                    else {
+                        $('#ref_txt').val('');
+                        var refund = $('#refund').val();
+                        var checkcount = $(":checkbox:checked").length;
+
+                        if (checkcount > 0) {
+                            $('.btn-new').show();
+                            $('#total_amts').show();
+                        } else {
+                            $('.btn-new').hide();
+                            $('#total_amts').hide();
+                        }
+                        $('#refund_text').show();
+
+                        $(':checkbox:checked').each(function (i) {
+                            var test = $(this).val();
+                            var value = test.split(',');
+                            var fare = value[1];
+                            val[i] = fare;
+                            var tax_pay = value[2];
+                            tax[i] = tax_pay;
+                        });
+
+                        var total = 0;
+                        for (var i = 0; i < val.length; i++) {
+                            total += val[i] << 0;
+                        }
+
+                        var total_tax = 0;
+                        $.each(tax, function () {
+                            total_tax += parseFloat(this) || 0;
+                        });
+
+
+                        var total_amt = total + total_tax;
+                        $('#refund_total').html(total);
+                        $('#service_tax').html(total_tax);
+                        $('#ref').html(total_amt);
+                        $('#ref_txt').val(total_amt);
+
+                    }
+                });
+            });
+
+            function confirmCancel(type) {
+                if (confirm('Do you want to cancel selected seats ?')) {
+
+                    var data = {};
+                    data.tickettype = type;
+                    data.seatcode = new Array();
+                    $('.pnr_user:checked').each(function () {
+                        var test = $(this).val();
+                        var value = test.split(',');
+                        var code = value[0];
+
+                        data.seatcode.push(code);
+                    });
+                    data.myAccountFlag = $('input[name="cancel_flg"]').is(":checked") == true ? 1 : 0;
+                    data.pnrcode = $('#pnr_code').val();
+
+                    if ($('#amount').val() != '') {
+                        data.amount = $('#amount').val();
+                    } else {
+                        data.amount = $('#ref_txt').val();
+                    }
+                    $('#refund_success').html(loading_popup);
+                    $('#refund_text').hide();
+                    $('#total_amts').hide();
+                    $.ajax({
+                        type: "POST",
+                        dataType: 'json',
+                        url: base_url + "search/cancel-ticket-confirmation",
+                        data: data,
+                        success: function (res) {
+                            if (res.status == 1) {
+                                $('#amount').val('');
+                                $('#ref_txt').val('');
+                                $('#ref').html('0');
+                                $('.btn-new').hide();
+                                $('#refund_success').addClass('alert-success');
+                                $('#refund_success').removeClass('cl_blk');
+                                $('#refund_success').html('Your ticket has been cancelled successfully ');
+                                //window.setTimeout(function () {
+                                //$('.cn_tck').trigger('click');
+                                //clearTicket();
+                                //}, 4000);
+
+                            } else {
+                                $('#refund_success').addClass('alert-danger');
+                                $('#refund_success').removeClass('cl_blk');
+                                $('#refund_success').html(res.errorDesc);
+                            }
+
+                        }
+                    })
+                }
+            }
+
+
+
+        </script>
+
+    </div>
+</body>
+</html>

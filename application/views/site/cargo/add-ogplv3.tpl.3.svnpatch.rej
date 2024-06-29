@@ -1,0 +1,52 @@
+--- application/views/site/cargo/add-ogplv3.tpl
++++ application/views/site/cargo/add-ogplv3.tpl
+@@ -2817,14 +2896,40 @@
+                 $('#edit-ogpl-sub-from').text(OGPLFormData.fromStation.name);
+             }
+             $('#edit-ogpl-to').text(OGPLFormData.toStation.name);
++            $('#edit-ogpl-branch-from').text(OGPLFormData.fromOrganization.name);
++            $('#edit-ogpl-branch-to').text(OGPLFormData.toOrganization.name);
+             $('#edit-ogpl-sub-to').text(OGPLFormData.toStation.name);
+             $('#edit-ogpl-vehicle').text(data.busVehicle.registationNumber);
+             $('#edit-ogpl-driver').text(OGPLFormData.vehicleDriver.name);
+             $('#edit-ogpl-driver2').text(OGPLFormData.secondaryDriver.name || '-');
+             $('#edit-ogpl-supervisor').text(OGPLFormData.supervisor.name || '-');
++            $('#edit-load-remarks').text(OGPLFormData.remarks || '-');
+             // $('#edit-ogpl-odometer').text(OGPLFormData.odometer || '-');
+-            $('#edit-load-remarks').text(OGPLFormData.remarks || '-');
++            if ($('#edit-load-remarks').text().trim() == '') {
++                $('#edit-hide-remarks').addClass('hide');
++            }
+ 
++            if ($('#edit-out-for-delivery-branch').text().trim() == '') {
++                $('#edit-out-for-delivery-hide-branch').addClass('hide');
++            }
++
++            if ($('#edit-link-load-via-zone').text().trim() == '') {
++                $('#edit-link-load-via-zone-hide').addClass('hide');
++            }
++
++            if ($('#edit-link-load-via').text().trim() == '') {
++                $('#edit-link-load-via-hide').addClass('hide');
++            }
++
++            if($('#edit-local-via-branches').text().trim() == ''){
++                $('#edit-local-hide-branch-via').addClass('hide');
++            }
++
++            if($('#edit-ogpl-via-zone').text().trim() == ''){
++                $('#edit-ogpl-via-zone-hide').addClass('hide');
++            }
++
++        
+             $('#edit-ogpl-via').text($('#ogpl-via option:selected').map(function() {
+                 return $(this).text();
+             }).get().join(', '));
+@@ -5036,6 +5141,7 @@
+                                     
+                                     OGPLFormData.code = response.OGPLCode;
+                                     $('#hid-ogpl-code').val(response.OGPLCode)
++                                    
+                                 }, 3000);
+                             }
+                         } else {

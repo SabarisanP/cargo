@@ -1,0 +1,54 @@
+.container-fluid{ background-color:#D30A4A !important; }
+#navigation .main-nav > li > a:hover {    text-decoration: none;    background: #e54477 !important;}
+#navigation .main-nav > li.open > a {    background: #e54477 !important;    text-decoration: none;}
+#navigation .dropdown-menu {/*    border-color: #e54477 !important;*/    border-top-style: none;    border-top-width: 0;}
+#navigation .dropdown-menu > li > a:hover {    background: #e54477;    color: #fff;    filter: none;}
+#navigation .dropdown-menu > li.dropdown-submenu .dropdown-menu {    border-top: 2px solid #e54477;    -moz-border-radius: 0;    -webkit-border-radius: 0;    border-radius: 0;    margin-left: 0;}
+#navigation .dropdown-menu > li.dropdown-submenu:hover > a, #navigation .dropdown-menu > li.dropdown-submenu:focus > a {    background: #e54477;    color: #fff;}
+.multi-column-dropdown li a:hover {    text-decoration: none;    color: #fff;    background-color: #e54477 ;}
+#navigation .user .dropdown.open {    background: #e54477 !important;}
+#navigation .user .icon-nav > li > a:hover {    background: #e54477 !important;    text-decoration: none;}
+.name_scroll:hover {    background:#e54477 !important;    color: #FFFFFF !important;    filter: none !important;    text-decoration:none;}
+
+
+
+.seat-booked-male-role-ugi6ojm403, .seat-booked-male-role-ugi6ojm402{  /* Admin, office */
+    border: 1px solid #5DD39E !important;
+    background-color: #5DD39E !important;
+    color:#fff !important;
+}
+.seat-booked-ladies-role-ugi6ojm403, .seat-booked-ladies-role-ugi6ojm402{  /* Admin, office */
+    border: 2px solid #5DD39E !important;
+}
+
+.seat-booked-male-role-ugi6ojm400, .seat-booked-male-role-ugi7cd48425, .seat-booked-male-role-ugi7of43432{  /* Agent, Way ticket, Blocked agent  */
+    border: 1px solid #2A9D8F !important;
+    background-color: #2A9D8F !important;
+    color:#fff !important;
+}
+.seat-booked-ladies-role-ugi6ojm400, .seat-booked-ladies-role-ugi7cd48425, .seat-booked-ladies-role-ugi7of43432{  /* Agent, Way ticket, Blocked agent */
+    border: 2px solid #2A9D8F !important;
+}
+
+.seat-booked-male-role-ugi6ojm399{  /* API Agent */
+    border: 1px solid #E76F51 !important;
+    background-color: #E76F51 !important;
+    color:#fff !important;
+}
+.seat-booked-ladies-role-ugi6ojm399{  /* API Agent */
+    border: 2px solid #E76F51 !important;
+}
+
+.seat-booked-male-role-ugi6ojm401{  /* Customer */
+    border: 1px solid #5CA4A9 !important;
+    background-color: #5CA4A9 !important;
+    color:#fff !important;
+}
+.seat-booked-ladies-role-ugi6ojm401{  /* Customer */
+    border: 2px solid #5CA4A9 !important;
+}
+
+.schedule-seat{
+    background-color: #27AE60 !important;
+    border: 1px solid #12532e !important;
+}

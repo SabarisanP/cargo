@@ -1,0 +1,26 @@
+--- application/views/site/import/excel-data-list.tpl
++++ application/views/site/import/excel-data-list.tpl
+@@ -29,6 +29,11 @@
+             <th align="right">Amount</th>
+             <th align="right">Payment Type</th>
+             <th align="right">Invoice Value</th>
++            <th align="right">Door Delivery</th>
++            <th align="right">Door Delivery Charges</th>
++            <th align="right">Door Pickup</th>
++            <th align="right">Door Pickup Charges</th>
++            <th align="right">Loading Charges</th>
+             <th align ="left">Article</th>
+             <th align ="left">Remarks</th>
+         </tr>
+@@ -89,6 +94,11 @@
+                 <td>{$row["v_total_freight"]}</td>
+                 <td>{$row["v_payment_type"]}</td>
+                 <td>{$row["v_invoice_value"]}</td>
++                <td>{$row["v_door_pickup"]}</td>
++                <td>{$row["v_door_pickup_charges"]}</td>
++                <td>{$row["v_door_delivery"]}</td>
++                <td>{$row["v_door_delivery_charges"]}</td>
++                <td>{$row["v_loading_charges"]}</td>
+                 <td>{$row["v_articles"]}</td>
+                 <td>{$row["v_remarks"]}</td>
+             </tr>

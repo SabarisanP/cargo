@@ -1,0 +1,39 @@
+.container-fluid{ background-color:#FA9008 !important; }
+#navigation .main-nav > li > a:hover {
+    text-decoration: none;
+    background: #EA9008 !important;
+}
+
+#navigation .main-nav > li.open > a {
+    background: #EA9008 !important;
+    text-decoration: none;
+}
+#navigation .dropdown-menu {
+    border-color: #FA9008 !important;
+    border-top-style: none;
+    border-top-width: 0;
+}
+#navigation .dropdown-menu > li > a:hover {
+    background: #FA9008 !important;
+    color: #fff;
+    filter: none;
+}
+#navigation .dropdown-menu > li.dropdown-submenu:hover > a, 
+#navigation .dropdown-menu > li.dropdown-submenu:focus > a {
+    background: #FA9008 !important;
+    color: #fff;
+}
+
+#navigation .user .dropdown.open {
+    background: #EA9008 !important;
+}
+#navigation .user .icon-nav > li > a:hover {
+    background: #EA9008 !important;
+    text-decoration: none;
+}
+.name_scroll:hover {
+    background:#EA9008 !important;
+    color: #FFFFFF !important;
+    filter: none !important;
+    text-decoration:none;
+}

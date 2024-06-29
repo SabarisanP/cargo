@@ -1,0 +1,314 @@
+﻿@model  Ezee.TicketBooking.Client.Model.TripChart
+@{
+    decimal totFare = 0;
+    decimal totServiceTax = 0;
+    decimal totNetAmt = 0;
+    int totSeatCount = Model.trip.bus.seatLayoutList.Count;
+    int totBookedSeatCount = Model.ticketDetailsList.Count;
+    int totVacantCount = totSeatCount - totBookedSeatCount;
+    string[] vacantSeatArray = Model.trip.bus.seatLayoutList.Select(seat => seat.seatName).Except(Model.ticketDetailsList.Select(i => i.seatName)).ToArray();
+    string vacantSeats = string.Join(", ", vacantSeatArray);
+    var UserWiseBookings = from t in Model.ticketDetailsList
+                           group t by new { t.bookedBy.name } into g
+                           select new { userName = g.Key.name, sum = g.Sum(a => a.seatFare), seats = string.Join(", ", g.Select(i => i.seatName).ToArray()) };
+
+    var stationWiseBookings = from t in Model.ticketDetailsList
+                              group t by new { Station = t.fromStation.name, stPoint = t.boardingPoint.name } into g
+                              select new { station = g.Key.Station, stationPoint = g.Key.stPoint, seats = string.Join(", ", g.Select(i => i.seatName).ToArray()) };
+
+    var dropingWiseBookings = from t in Model.ticketDetailsList
+                              group t by new { Station = t.toStation.name, stPoint = t.droppingPoint.name } into g
+                              select new { station = g.Key.Station, stationPoint = g.Key.stPoint, seats = string.Join(", ", g.Select(i => i.seatName).ToArray()) };
+    var uLayer = Model.trip.bus.seatLayoutList.Where(item => item.layer == 2);
+    var lLayer = Model.trip.bus.seatLayoutList.Where(item => item.layer == 1);
+    var maxColCount = lLayer.OrderByDescending(i => i.colPos).First().colPos;
+
+}
+
+
+
+<html>
+<head>
+    <title>Trip Chart</title>
+    <link href="http://www.ezeebits.com/assets/css/print.css?6" rel="stylesheet">
+</head>
+<body>
+
+
+    <table class="remove-border-top" cellpadding="5" width="98%">
+        <tr>
+            <td align="center">
+                <img src="trip_chart_logo.jpg" alt="logo">
+            </td>
+        </tr>
+        <tr>
+            <td width="100%" colspan="2">
+                <table width="100%">
+                    <tr>
+                        <td width="60%">@Model.trip.schedule.name<br> @Model.trip.bus.name   <br> Driver Name : </td>
+                        <td width="40%">Trip Id : &nbsp; @Model.trip.tripCode  <br>Travel Date:@Model.trip.stageList[0].fromStation.dateTime<br> Mobile : </td>
+                    </tr>
+                </table>
+            </td>
+
+        </tr>
+    </table>
+
+    <table class="table table-bordered" cellpadding="5" width="98%">
+        <tr class="info bold">
+            <td rowspan="2" width="5%" align="center">Seat No</td>
+            <td rowspan="2" width="10%" align="center">PNR </td>
+            <td rowspan="2" width="10%" align="center">BookedDate</td>
+            <td colspan="4" align="center">Passenger Details</td>
+            <td rowspan="2" width="10%" align="center">From</td>
+            <td rowspan="2" width="10%" align="center">To</td>
+            <td rowspan="2" width="10%" align="center">Boarding Point</td>
+            <td rowspan="2" width="10%" align="center">Booked by</td>
+            <td rowspan="2" width="5%" align="center">Booked Type</td>
+        </tr>
+        <tr class="info bold">
+            <td wwidth="7%" align="left">Name</td>
+            <td wwidth="3%" align="center">Age</td>
+            <td wwidth="3%" align="center">G</td>
+            <td wwidth="7%" align="center">Mobile</td>
+        </tr>
+        <tbody>
+
+
+            @foreach (Ezee.TicketBooking.Client.Model.SeatLayoutList s in Model.trip.bus.seatLayoutList.OrderBy(i => i.layer * 100 + i.rowPos * 10 + i.colPos))
+            {
+                var si = Model.ticketDetailsList.FirstOrDefault<Ezee.TicketBooking.Client.Model.TicketDetailsList>(i => i.seatName == s.seatName);
+                var indx = s.layer * 100 + s.rowPos * 10 + s.colPos;
+
+                var bookedDt = "";
+                if (si != null)
+                {
+                    bookedDt = Convert.ToDateTime(si.bookedDate).ToString("dd/MM/yyyy");
+                }
+                <tr>
+
+                    @if (si != null)
+                {
+                        <td rowspan="2" align="center">@s.seatName</td>
+                        <td align="center" rowspan="2"><b>@si.ticketCode</b></td>
+                        <td align="center">@bookedDt</td>
+
+                        <td align="left"><b>@si.passengerName</b></td>
+                        <td align="center">@si.passengerAge</td>
+                        <td align="center">@si.gender</td>
+                        <td align="center"><b>@si.passengerMobile</b></td>
+
+
+                        <td align="left">@si.fromStation.name</td>
+                        <td align="left">@si.toStation.name</td>
+                        <td align="left">@si.boardingPoint.name</td>
+                        <td align="left">@si.bookedBy.name</td>
+                        <td align="left">&nbsp;</td>
+                    }
+                    @if (si == null)
+                {
+                        <td align="center">@s.seatName</td>
+                        <td> &nbsp;</td>
+                        <td>&nbsp;</td>
+
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                    }
+
+                </tr>
+                if (si != null)
+                {
+                    <tr>
+                        <td align="left" colspan="10"> @si.remarks</td>
+                    </tr>
+                }
+
+            }
+        </tbody>
+    </table>
+
+    <table class="table remove-border-top" width="100%">
+        <tr>
+            <td width="40%">
+                <br>
+                <h5>Seat Status</h5>
+                <table class="table table-bordered">
+                    <tr>
+                        <td class="bold" align="center" nowrap><b>Total no of seats</b></td>
+                        <td class="bold" align="center"><b>Total no of vacant</b></td>
+                        <td class="bold" align="center"><b>Total no of booked seat</b></td>
+
+                    </tr>
+                    <tr>
+                        <td align="center">@totSeatCount</td>
+                        <td align="center">@totVacantCount</td>
+                        <td align="center">@totBookedSeatCount</td>
+                    </tr>
+                    <tr>
+                        <td class="bold" align="center"><b>Vacant Seat Number</b></td>
+                        <td class="" colspan="2">@vacantSeats</td>
+                    </tr>
+                </table>
+
+                <h5>Boarding Details</h5>
+                <table class="table table-bordered" width="100%">
+                    <tr>
+                        <td class="bold" nowrap><b>Station</b></td>
+                        <td class="bold"><b>Station Point</b></td>
+                        <td class="bold"><b>Seat Name</b></td>
+                    </tr>
+                    @foreach (var b in stationWiseBookings)
+                    {
+                        <tr>
+                            <td> @b.station </td>
+                            <td>@b.stationPoint</td>
+                            <td>
+                                @b.seats
+                            </td>
+                        </tr>
+                    }
+
+
+                </table>
+
+                <h5>User Booking List</h5>
+                <table class="table table-bordered" width="100%">
+                    <tr>
+                        <td class="bold"><b>User Name</b></td>
+                        <td class="bold"><b>Seat Name</b></td>
+                        <td class="bold"><b>Total Amount</b></td>
+                    </tr>
+                    @foreach (var u in UserWiseBookings)
+                    {
+                        <tr>
+                            <td>@u.userName</td>
+                            <td>
+                                @u.seats
+                            </td>
+                            <td>Rs.@u.sum</td>
+                        </tr>
+                    }
+
+                </table>
+
+            </td>
+            <td width="1%"></td>
+            <td width="50%" valign="top">
+                &nbsp;
+                <h5>Bus Map</h5>
+                @if (uLayer != null)
+                {
+                   
+                    <table width="98%" border="1px solid #ddd;">
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td rowspan="7" width="2" align="center">U<br>P<br>P<br>E<br>R</td>
+                                    </tr>
+                                    @for (int rowIndx = 1; rowIndx <= uLayer.OrderByDescending(i => i.rowPos).First().rowPos; rowIndx++)
+                                    {
+                                        var rowSeats = uLayer.Where(item => item.rowPos == rowIndx).OrderBy(i => i.colPos).ToList();
+                                        <tr>
+                                            @for (int colIdx=0;colIdx <maxColCount; colIdx++)
+                                            {
+
+                                                var ticket = Model.ticketDetailsList.FirstOrDefault(item => item.seatName == (rowSeats.Count ==0?"": rowSeats[colIdx].seatName));
+                                                var gender = ticket == null ? "" : ticket.gender;
+                                                var css = gender == "" ? "empty_book" : gender == "M" ? "male_book" : "female_book";
+                                                var border = gender == "" ? "1px dotted black" : gender == "M" ? "2px solid black" : "double 3px black";
+                                                border = rowSeats.Count == 0 ? "none" : border;
+                                                <td class="seat-lay-visibility-info @css" style="border:@border !important;">@(rowSeats.Count ==0 ? " " : rowSeats[colIdx].seatName) </td>
+                                            }
+
+                                        </tr>
+                                    }
+
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                }
+                <br>
+                @if (lLayer != null)
+                {
+                    <table width="98%" border="1px solid #ddd;">
+                        <tr>
+                            <td>
+                                <table>
+                                    <tr>
+                                        <td rowspan="7" width="2" align="center"> <div class="seat-map-driver"></div><br>L<br>O<br>W<br>E<br>R</td>
+                                    </tr>
+                                    @for (int rowIndx = 1; rowIndx <= lLayer.OrderByDescending(i => i.rowPos).First().rowPos; rowIndx++)
+                                    {
+
+                                        var rowSeats = lLayer.Where(item => item.rowPos == rowIndx).OrderBy(i => i.colPos).ToList();
+                                        <tr>
+                                            @for (int colIdx = 0; colIdx < maxColCount; colIdx++)
+                                            {
+
+                                                var ticket = Model.ticketDetailsList.FirstOrDefault(item => item.seatName == (rowSeats.Count == 0 ? "" : rowSeats[colIdx].seatName));
+                                                var gender = ticket == null ? "" : ticket.gender;
+                                                var css = gender == "" ? "empty_book" : gender == "M" ? "male_book" : "female_book";
+                                                var border = gender == "" ? "1px dotted black" : gender == "M" ? "2px solid black" : "double 3px black";
+                                                border = rowSeats.Count == 0 ? "none" : border;
+                                                <td class="seat-lay-visibility-info @css" style="border:@border !important;">@(rowSeats.Count ==0 ? "  " : rowSeats[colIdx].seatName) </td>
+                                            }
+
+                                        </tr>
+                                    }
+
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                }
+                <table>
+                    <tr class="float-right">
+                        <td class="seat-lay-visibility-info-lay empty_book float-right" style="border:1px dotted black !important;"> </td>
+                        <td>&nbsp;&nbsp;- Available </td>&nbsp;
+                        <td class="seat-lay-visibility-info-lay male_book float-right" style="border:2px solid black !important;"></td>
+                        <td>&nbsp;&nbsp;- Male </td>&nbsp;
+                        <td class="seat-lay-visibility-info-lay female_book float-right" style="border:double 3px black !important;"></td>
+                        <td>&nbsp;&nbsp;- Female</td>
+                    </tr>
+                </table>
+
+                <br>
+                <h5>Dropping Details</h5>
+                <table class="table table-bordered">
+                    <tr>
+                        <td class="bold" nowrap>Station</td>
+                        <td class="bold">Station Point</td>
+                        <td class="bold">Seat Name</td>
+                    </tr>
+                    @foreach (var item in dropingWiseBookings)
+                                            {
+                        <tr>
+                            <td>@item.station </td>
+                            <td>@item.stationPoint</td>
+                            <td>
+                                @item.seats
+                            </td>
+                        </tr>
+                    }
+
+                </table>
+            </td>
+        </tr>
+    </table>
+
+
+</body>
+</html>
+@*<script>
+        window.print();
+    </script>*@

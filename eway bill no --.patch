@@ -1,0 +1,127 @@
+Index: application/views/site/cargo/booking-details.tpl
+===================================================================
+--- application/views/site/cargo/booking-details.tpl	(revision 5276)
++++ application/views/site/cargo/booking-details.tpl	(working copy)
+@@ -13,6 +13,7 @@
+         {assign var="addonTypeCode" value=$item->addonsType->code}
+         {$addition['code']=$item->code}
+         {$addition['name']=$addonTypeCode}
++        {$addition['referenceCode']=$item->referenceCode}
+         {$additiondatas[]=$addition}
+     {/foreach}
+         <div class="col-md-10 bold ft_14">
+@@ -19,17 +20,27 @@
+             <div class="row">
+             <span style="margin-left:10px;">  Cargo Booking Details   :</span> <span class="badge cargo-round badge-warning font-17">{$summary->code}</span>  
+             {assign var="cargo_additional" value=config_item('cargo_additional')}
++            {assign var="displayed_logos" value=[]}
++            {assign var=count_eway value=0}
+             {foreach from=$additiondatas item=addon key=key name=name}
+                 {if $addon['name']=="EXPDL"}
+                     {$is_expdl = 1}
+                     {$expd_code = $addon['code']}
+-                    <span class="indic indic-left cargo-round badge badge font-17 badge-{$cargo_additional['EXPDL']['color']}" title="Express Delivery">{$cargo_additional['EXPDL']['name']}</span> 
++                    <span class="indic indic-left cargo-round badge badge font-16 badge-{$cargo_additional['EXPDL']['color']}" title="Express Delivery">{$cargo_additional['EXPDL']['name']}</span> 
+                 {/if}
+                 {if $addon['name']=="HDLWC"}
+                     {$is_hdlwc = 1}
+                     {$hdlwc_code = $addon['code']}
+-                    <span class="indic indic-right badge badge cargo-round font-17 badge-{$cargo_additional['HDLWC']['color']}" title="Handle With Care">{$cargo_additional['HDLWC']['name']}</span>
++                    <span class="indic indic-right badge badge cargo-round font-16 badge-{$cargo_additional['HDLWC']['color']}" title="Handle With Care">{$cargo_additional['HDLWC']['name']}</span>
+                 {/if}
++                {if $addon['name']=="EWBL" && !in_array('EWBL', $displayed_logos)}
++                    <img src="{$base_url}assets/img/icons/invoice.svg" width="40px" loading="lazy">
++                    {assign var="displayed_logos" value=$displayed_logos|@array_merge:['EWBL']}
++                {/if}
++                {if $addon['referenceCode'] !='' && ! in_array('', $displayed_logos)}
++                    <img src="{$base_url}assets/img/icons/eway.svg" width="40px" loading="lazy">
++                    {assign var="displayed_logos" value=$displayed_logos|@array_merge:['']}
++                {/if}
+             {/foreach}
+             </div>
+         </div>
+Index: application/views/site/cargo/ogpl-chart-print.tpl
+===================================================================
+--- application/views/site/cargo/ogpl-chart-print.tpl	(revision 5276)
++++ application/views/site/cargo/ogpl-chart-print.tpl	(working copy)
+@@ -135,7 +135,15 @@
+                     {assign var='ac_kg' value=$ac_kg+$row->total_actual_unit_value}
+                     <tr>
+                         <td align="center">{$sno}</td>
+-                        <td align="center" class="lr">{$row->cargo_code}</td>
++                        <td align="center" class="lr">{$row->cargo_code}
++                            <br>
++                            {if isNotNull($row->eway_bill_no)}
++                                <img src="{$base_url}assets/img/icons/eway.svg" width="30px" loading="lazy">
++                            {/if}
++                            {if isNotNull($row->invoice_number)}
++                                <img src="{$base_url}assets/img/icons/invoice.svg" width="30px" loading="lazy">
++                            {/if}
++                        </td>
+                         <td align="center">{$row->total_item_count}{if $namespace == 'dishashree'} / {$row->total_unit_value}{/if}</td>
+                         {if $namespace =='ktwoklogistics'}
+                             <td align="center"> {$row->total_unit_value|default:'-'}</td>
+Index: application/views/site/cargo/ogpl-chart.tpl
+===================================================================
+--- application/views/site/cargo/ogpl-chart.tpl	(revision 5276)
++++ application/views/site/cargo/ogpl-chart.tpl	(working copy)
+@@ -132,7 +132,15 @@
+ 
+                                                 <tr>
+                                                     <td align="center">{$sno}</td>
+-                                                    <td align="center" nowrap><a href='javascript:;' title="more details" onclick='getCargoDetails("{$row->cargo_code}")'>{$row->cargo_code}</a></td>
++                                                    <td align="center" nowrap><a href='javascript:;' title="more details" onclick='getCargoDetails("{$row->cargo_code}")'>{$row->cargo_code}</a>
++                                                        <br>    
++                                                        {if isNotNull($row->eway_bill_no)}
++                                                            <img src="{$base_url}assets/img/icons/eway.svg" width="30px" loading="lazy">
++                                                        {/if}
++                                                        {if isNotNull($row->invoice_number)}
++                                                            <img src="{$base_url}assets/img/icons/invoice.svg" width="30px" loading="lazy">
++                                                        {/if}
++                                                    </td>
+                                                     {if $namespace =='srisendhursps'}
+                                                     <td align="center" nowrap>{$row->cargo_item_name}</td>
+                                                     {/if}
+@@ -446,8 +454,15 @@
+     </div>
+ </div>
+ 
+-<script>
++<script> 
++    var OGPLVehicles = {$vehicles|json_encode};
++    var ogpl={$ogpl|json_encode};
++    var odoDetails={$odoDetails|json_encode};
++    var transitOgplcode='{$smarty.request.transitCode}';
++    var user_login_branch = {$login_branch|json_encode};
+     var cargoSetting = {$cargo_setting|json_encode};
++    var startOdoUpdated = odoDetails != null && odoDetails.startOdometer != null ? odoDetails.startOdometer : 0;
++    var login_user = {$login_user|json_encode};
+     $('[data-toggle="tooltip"]').tooltip({
+         html: true
+     });
+@@ -477,6 +492,9 @@
+     }
+ 
+     function print_cargo_ogpl_chart(code, groupby) {
++        if(checkOdoUpdation()){
++            return;
++        }
+         var route = $('#ogpl-chart-print').val();
+         var param = $.param({
+             transitCode: code,
+@@ -488,4 +506,14 @@
+         var wo = window.open(url, "_blank", "toolbar=no, scrollbars=yes, resizable=yes, top=50, left=50, width=1000, height=650");
+         wo.print();
+     }
++
++    function checkOdoUpdation(){
++        if(startOdoUpdated == 0){
++            getOdometter(ogpl.busVehicle.code , transitOgplcode);
++            return true;
++        }else{
++            false;
++        }
++       
++    }
+ </script>
+\ No newline at end of file

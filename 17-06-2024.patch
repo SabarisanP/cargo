@@ -1,0 +1,255 @@
+Index: application/controllers/cargo.php
+===================================================================
+--- application/controllers/cargo.php	(revision 5389)
++++ application/controllers/cargo.php	(working copy)
+@@ -869,6 +869,10 @@
+                 $data['transactions_details'] = $val->transactionMode;
+             }
+         }
++
++        // echo "<pre>";
++        // print_r($data['transactions_details']);
++        // exit;
+         $this->load->view('site/cargo/booking-details', $data);
+     }
+ 
+@@ -5312,6 +5316,9 @@
+         $organizationDetail = json_decode($organizationDetails);
+         $data['organization'] = $organizationDetail->data;
+ 
++        list($stations, $routes) = get_routes_and_stations();
++        $data['stations'] = $stations;
++
+         $GroupDetails = $this->api_model->getGroup(array('authtoken' => $this->_user_hash));
+         $GroupDetail = json_decode($GroupDetails);
+         $data['groups'] = $GroupDetail->data;
+@@ -5341,7 +5348,7 @@
+ 
+         $data['cargo_setting'] = _get_cargo_settings();
+         $data['cargo_payment_status'] = config_item('pay_type');
+-
++        $data['org_station_code']=$this->session->userdata('org_station_code');
+         echo $this->load->view('site/cargo/users', $data);
+     }
+ 
+@@ -5364,6 +5371,25 @@
+         echo $this->load->view('site/cargo/users-commissions', $data);
+     }
+ 
++    function cargo_station_commissions() {
++        $this->is_logged_in();
++
++        $data = array(
++            'userCode' => $this->input->post('userCode')
++        );
++        $result = $this->api_model->cargoUserCommissions($data);
++        $result = json_decode($result);
++        
++        usort($result->data, function($a, $b) {
++            return $a->state->name < $b->state->name ? -1 : 1;
++        });
++        $data['result'] = $result->data;
++
++        $data['cargo_setting'] = _get_cargo_settings();
++
++        echo $this->load->view('site/cargo/users-station-commissions', $data);
++    }
++
+     function update_cargo_user_commissions() {
+         $this->is_logged_in();
+         $code = $this->input->post('code');
+@@ -5407,6 +5433,53 @@
+         echo $this->api_model->addCargoUserCommissions($data);
+     }
+ 
++    function update_cargo_user_station_commissions() {
++        $this->is_logged_in();
++        $code = $this->input->post('code');
++        $activeflag = $this->input->post('activeFlag');
++        $data = array(
++            'userCode' => $this->input->post('userCode'),
++            'paidCommissionValue' => $this->input->post('paidCommissionValue'),
++            'toPayCommissionValue' => $this->input->post('toPayCommissionValue'),
++            'accPayCommissionValue' => $this->input->post('accPayCommissionValue'),
++            'loadingCommissionValue' => $this->input->post('loadingCommissionValue'),
++            'unloadingCommissionValue' => $this->input->post('unloadingCommissionValue'),
++            'delivaryCommissionValue' => $this->input->post('delivaryCommissionValue'),
++            'delivaryTopayCommissionValue' => $this->input->post('delivaryTopayCommissionValue'),
++            'delivaryPaidCommissionValue' => $this->input->post('delivaryPaidCommissionValue'),
++            'delivaryAccpayCommissionValue' => $this->input->post('delivaryAccpayCommissionValue'),
++            'doorPickupCommissionValue' => $this->input->post('doorPickupCommissionValue')?: '0',
++            'doorDeliveryCommissionValue' => $this->input->post('doorDeliveryCommissionValue')?: '0',
++            'paidCommissionTypeCode' => $this->input->post('paidCommissionTypeCode'),
++            'toPayCommissionTypeCode' => $this->input->post('toPayCommissionTypeCode'),
++            'accPayCommissionTypeCode' => $this->input->post('accPayCommissionTypeCode'),
++            'loadingCommissionTypeCode' => $this->input->post('loadingCommissionTypeCode'),
++            'unloadingCommissionTypeCode' => $this->input->post('unloadingCommissionTypeCode'),
++            'deliveryTopayCommissionTypeCode' => $this->input->post('deliveryTopayCommissionTypeCode'),
++            'deliveryPaidCommissionTypeCode' => $this->input->post('deliveryPaidCommissionTypeCode'),
++            'deliveryAccpayCommissionTypeCode' => $this->input->post('deliveryAccpayCommissionTypeCode'),
++            'doorPickupCommissionTypeCode' => $this->input->post('doorPickupCommissionTypeCode'),
++            'doorDeliveryCommissionTypeCode' => $this->input->post('doorDeliveryCommissionTypeCode'),
++            'creditLimit' => $this->input->post('creditLimit')?: '0',
++            'captureCommissionFlag' => $this->input->post('captureCommissionFlag')?: '0',
++            'state' => $this->input->post('state') ?: array('code' => ''),
++            'commissionValueType' => array('code' => 'PER'),
++            'fromStation'=> $this->session->userdata('org_station_code'),
++            'toStations'=> $this->input->post('toStations')?: array('code' => ''),
++
++        );
++
++        if (!empty($code)) {
++            $data['code'] = $code;
++        }
++
++        if (!empty($activeflag)) {
++            $data['activeFlag'] = $activeflag;
++        }
++        echo $this->api_model->addCargoUserCommissions($data);
++    }
++    
++    
+     function sms_lr_details() {
+         $this->is_logged_in();
+         $data = array(
+@@ -8663,14 +8736,12 @@
+                 return;
+             }
+         }
++
++        $fromOrganization = $this->input->post('fromOrganization');
+         $toOrganization = $this->input->post('toOrganization');
+-
+-        if(isset($toOrganization)){
+-            $toOrganization= $toOrganization['code'];
+-        }else{
+-            $toOrganization=array('code' => $this->session->userdata('org_code'));
+-        }
+-
++        $fromOrganizationCode = isset($fromOrganization['code']) ? $fromOrganization['code'] : 'NA';
++        $toOrganizationCode = isset($toOrganization['code']) ? $toOrganization['code'] : 'NA';
++            
+         $ogpl = $this->api_model->cargoOGPLupdate(array(
+             'activeFlag' => $this->input->post('activeFlag'),
+             'code' => $this->input->post('code') ?: '',
+@@ -8677,8 +8748,8 @@
+             'name' => $this->input->post('name'),
+             'fromStation' => $this->input->post('fromStation'),
+             'toStation' => $this->input->post('toStation'),
+-            'fromOrganization' => array('code' => $this->session->userdata('org_code')),
+-            'toOrganization' => array('code' => $toOrganization),
++            'fromOrganization' => array('code' => $fromOrganizationCode?$fromOrganizationCode:"NA"),
++            'toOrganization' => array('code' => $toOrganizationCode?$toOrganizationCode:"NA"),
+             'viaStations' => $this->input->post('viaStations') ?: [],
+             'viaZones' => $this->input->post('viaZones') ?: [],
+             'hubViaStations' => $this->input->post('linkLoadStations') ?: [],
+@@ -8726,8 +8797,8 @@
+                 'transitDetailsType' => array('code' => 'DFLT'),
+                 'toStation' => array('code' => $row['to']),
+                 'fromStation' => array('code' => $row['from']),
+-                'fromOrganization' => array('code' => $row['oldTransitOrg']),
+-                'toOrganization' => array('code' => $row['transitOrganization']),
++                'fromOrganization' => array('code' =>  $fromOrganizationCode?$fromOrganizationCode:"NA"),
++                'toOrganization' => array('code' => $toOrganizationCode?$toOrganizationCode:"NA"),
+                 'transitCargo' => array('code' => $ogpl->data->code),
+                 'transitOrganization' => array('code' => $row['transitOrganization']),
+                 'cargoList' => $codes
+@@ -8757,8 +8828,8 @@
+                 'transitDetailsType' => array('code' => 'HULD'),
+                 'toStation' => array('code' => $row['to']),
+                 'fromStation' => array('code' => $row['from']),
+-                'fromOrganization' => array('code' => $row['oldTransitOrg']),
+-                'toOrganization' => array('code' => $row['transitOrganization']),
++                'fromOrganization' => array('code' =>$fromOrganizationCode?$fromOrganizationCode:"NA"),
++                'toOrganization' => array('code' =>$toOrganizationCode?$toOrganizationCode:"NA"),
+                 'transitCargo' => array('code' => $ogpl->data->code),
+                 'transitOrganization' => array('code' => $row['transitOrganization']),
+                 'cargoList' => $codes
+@@ -8788,8 +8859,8 @@
+                 'transitDetailsType' => array('code' => 'LCLD'),
+                 'toStation' => array('code' => $row['to']),
+                 'fromStation' => array('code' => $row['from']),
+-                'fromOrganization' => array('code' => $row['oldTransitOrg']),
+-                'toOrganization' => array('code' => $row['transitOrganization']),
++                'fromOrganization' => array('code' => $fromOrganizationCode?$fromOrganizationCode:"NA"),
++                'toOrganization' => array('code' => $toOrganizationCode?$toOrganizationCode:"NA"),
+                 'transitCargo' => array('code' => $ogpl->data->code),
+                 'transitOrganization' => array('code' => $row['transitOrganization']),
+                 'cargoList' => $codes
+@@ -8819,8 +8890,8 @@
+                 'transitDetailsType' => array('code' => 'OFDLD'),
+                 'toStation' => array('code' => $row['to']),
+                 'fromStation' => array('code' => $row['from']),
+-                'fromOrganization' => array('code' => $row['oldTransitOrg']),
+-                'toOrganization' => array('code' => $row['transitOrganization']),
++                'fromOrganization' => array('code' => $fromOrganizationCode?$fromOrganizationCode:"NA"),
++                'toOrganization' => array('code' => $toOrganizationCode?$toOrganizationCode:"NA"),
+                 'transitCargo' => array('code' => $ogpl->data->code),
+                 'transitOrganization' => array('code' => $row['transitOrganization']),
+                 'cargoList' => $codes
+@@ -15847,10 +15918,63 @@
+             );
+             $result = $this->api_model->getDeliveryReceipt($data);
+             $result = json_decode($result);
++            
+             $data['result'] = end($result->data);
+-
++            $data['cargo_payment_status'] = config_item('cargo_payment_status');
++            $usr_pro = $this->api_model->getUserProfile(array('authtoken' => $this->session->userdata('user_hash')));
++            $usr_pro = json_decode($usr_pro);
++        
++            $organizationCode= $usr_pro->data->organization->code;
++            $organizationDetails = $this->api_model->getOrganizationDetails(array('organizationcode' =>$organizationCode));
++            $organizationDetails = json_decode($organizationDetails);
++            $data['user_profile'] = $usr_pro->data;
++            $data['organizationDetails']  = $organizationDetails->data;
++            
++            $bank_detail = $this->api_model->getAllBankDetails(array(
++                    'entityTypeCode' => 'NMSP',
++                    'referenceCode' => _get_namespace_id()
++                ));
++            $bank_detail = json_decode($bank_detail);
++            $data['bank_detail'] = $bank_detail->data;
++    
++            $nsprofile = $this->api_model->getNamespaceProfile(array('authtoken' => $this->_user_hash));
++            $nspro = json_decode($nsprofile);
++            $data['nsprofile'] = $nspro->data;
++            $gst = $this->api_model->getGstDetails();
++            $gst = json_decode($gst);
++            $ReceiptLr = [];
++            $summarys = [];
++            $summary = $this->api_model->getCargoSummary(array('cargoCode' =>  $this->input->get('code')));
++            $summary = json_decode($summary);
++            $summarys[] = $summary->data;
++            $data['summary'] = $summarys;
++            $ReceiptLr[]=$summary->data;
++    
++            $fromBranchDetails = $this->api_model->getOrganizationDetails(array(
++                'organizationcode' => $ReceiptLr[0]->fromOrganization->code,
++            ));
++            $fromBranchDetails =json_decode($fromBranchDetails);
++            
++            $deliveryBranchGstCode ='';
++            foreach ($gst->data as $val){
++                if($fromBranchDetails->data[0]->station->state->code==$val->state->code){
++                    $deliveryBranchGstCode =$val;
++                }
++            }
++            
++            $data['deliveryBranchGstCode']=$deliveryBranchGstCode;
++            $data['ReceiptLr'] =$ReceiptLr;
++            $gstin = ['gstin' =>$ReceiptLr[0]->toCustomerGST,];
++            $GstDetails =$this->api_model->getGSTDetailsApi($gstin);
++            $GstDetails = json_decode($GstDetails);
++            $data['GstDetails']=$GstDetails->data;
++    
++            $data['Gststate'] =$GstDetails->data->state->code; 
++            $data['gst_state'] =config_item('get_gst_state');
++            $data['no_of_copy'] =$this->input->get('count');
++        
+             $this->load->exclude_template();
+-            $content = $this->load->view('site/payment/transaction-receipt-print-seenutransport', $data, true);
++            $content = $this->load->view('site/payment/delivery-receipt-print-seenutransport', $data, true);
+         } elseif ($summary->data->cargoStatus->code == 'CD' && in_array($this->session->userdata('namespace_id'), ["citycargo","cityparcel"])) {
+             $this->load->exclude_template();
+             $content = $this->load->view('site/cargo/delivery-receipt-pdf-cityparcel', $data, true);

@@ -1,0 +1,134 @@
+// for debugging start
+function lineWithArg(argName=null){
+    var line='';
+        if(argName!=null){
+        line=`-----------------------------${argName}-------------------------------------`;
+        }else{
+        line=`-----------------------------------------------------------------------------`;
+        }
+    console.log(line);
+}
+
+function printJson(data,argName=null){
+    if(allowPrint === true){
+        alert(allowPrint);
+        lineWithArg(argName);
+        console.log(JSON.stringify(data, null, 3));
+    }
+}
+
+function print_r(data,argName=null){
+    if(allowPrint === true){
+        lineWithArg(argName);
+        console.log(data);
+    }
+}
+// for debugging end
+
+//export Excel Function  ex: exportExcel('table_id_name', 'excel file name');
+var exportExcel = (function () {
+    var uri = 'data:application/vnd.ms-excel;base64,';
+    var template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head>' +
+        '<style>th{  color: #fff; padding: 10px; } thead{ background-color: #64b92a; }</style>' +
+        '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>' +
+        '<x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>' +
+        '</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->' +
+        '<meta http-equiv="content-type" content="text/plain; charset=UTF-8"/></head><body><table style="font-weight:500;" border="1px" cellpadding="0" cellspacing="0" >{table}</table></body></html>';
+
+        return function (tableId, name) {
+        var table = document.getElementById(tableId);
+        if (!table) {
+            return;
+        }
+        
+        var blob = new Blob([template.replace('{worksheet}', name || 'Worksheet').replace('{table}', table.innerHTML)], {
+            type: 'application/vnd.ms-excel'
+        });
+    
+        var link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = name + '.xls';
+        link.click();
+    };
+})();
+// export function end
+
+//Print Element Function 
+function printTable(elm,name) {
+    // console.log(elm);
+    let element=$("#"+elm+"");
+    element.css('border', '1px solid black');
+    element.printThis({
+                importCSS: true,
+                importStyle: true,
+                loadCSS: "assets/bootstrap/css/bootstrap.min.css",
+                header: "<h1>"+name+"</h1>",
+                beforePrintEvent:element.css('border', '1px solid black'),
+                afterPrintEvent: element.css('border', '1px solid black')
+            });
+} //example :  printTable('table_id','file name')
+//Print Element function end
+
+//get intersection values in an array (for payment types task)
+function findIntersection(array1, array2) {
+    return array1.filter(obj1 =>
+        array2.some(obj2 =>
+        Object.keys(obj1).every(key =>
+            obj2.hasOwnProperty(key) && obj1[key] === obj2[key]
+        )
+        )
+    );
+}
+
+
+//show Success or error message in page
+var alertMsg = (function () {
+    function successMsg(className, message, title = '') {
+        var targetElement = $('.' + className);
+            var titleContent = title !=""?`<strong>${title}</strong>`:'<strong>Success !</strong>';
+            var html = `<div class="alert alert-success alert-dismissible show" w-100 role="alert">
+                             ${titleContent} ${message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>`;
+            targetElement.html(html);
+            if(alertClosingtime !=false){
+                setTimeout(() => {
+                    targetElement.html('');
+                }, alertClosingtime);
+            }
+    }
+
+    function errorMsg(className, message, title = '') {
+        var targetElement = $('.' + className);
+        var titleContent = title !=""?`<strong>${title}</strong>`:'<strong>Attention !</strong>';
+            var html = `<div class="alert alert-danger alert-dismissible w-100 show" role="alert">
+                           ${titleContent} ${message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>`;
+            targetElement.html(html);
+            if(alertClosingtime !=false){
+                setTimeout(() => {
+                    targetElement.html('');
+                }, alertClosingtime);
+            }
+    }
+
+    function hideMsg(className) {
+        var targetElement = $('.' + className);
+        targetElement.html('');
+    }
+
+    return {
+        successMsg: successMsg,
+        errorMsg: errorMsg,
+        hideMsg: hideMsg
+    };
+})();
+
+//btn blocking 
+function btnBlock(element){
+    $(element).attr('disabled',true);
+    setInterval(() => {
+        $(element).attr("disabled", false);
+    },releaseTime);
+}

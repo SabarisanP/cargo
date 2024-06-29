@@ -1,0 +1,14 @@
+--- application/config/cargo.php
++++ application/config/cargo.php
+@@ -865,6 +865,11 @@
+     "v_total_freight" => "Amt",
+     "v_payment_type" => "LR Type",
+     "v_invoice_value" => "Declared Value",
++    "v_door_pickup" =>"Door Pickup",
++    "v_door_pickup_charges" => "Door Pickup charges",
++    "v_door_delivery" => "Door Delivery ",
++    "v_door_delivery_charges" => "Door Delivery Charges",
++    "v_loading_charges" =>"Loading Charges",
+     "v_articles"=>"Articls",
+     "v_remarks"=>"Remarks",
+     "e_from_station_code" => "",

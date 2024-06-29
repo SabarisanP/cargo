@@ -1,0 +1,168 @@
+<div class="brand_top">
+    <h3>Cargo Branch</h3> 
+</div>
+<div id="main_wrapper">
+    <div class="page_content">
+        <div id="container-fluid">
+            <div class="row">
+                <div id="contents" class="col-lg-12">
+                    <!-- PAGE HEADER-->
+                    <div class="row">
+                        <div style="clear: both;"></div><br>
+                        <div class="col-md-12">
+                            <div class="panel panel-default">
+                                <div class="panel-body">
+                                    <div class="table-responsive">
+                                        <div class="row">
+                                            <div class="col-lg-3 form-group">
+                                                <label>Branch</label>
+                                                <select id="branch-filter" class="form-control">
+                                                    <option value="All">All Branch</option>
+                                                    {foreach item=row from=$branches key=k}
+                                                        <option value="{$row->code}">{$row->name}</option>
+                                                    {/foreach}
+                                                </select>
+                                            </div>
+                                            <div class="col-lg-4 form-group">
+                                                <label>&nbsp;</label>
+                                                <button type="button" class="btn btn-default btn-clear" onclick="showAllBranch();">Clear</button>
+                                            </div>
+                                        </div>
+                                       <table id="organizations_table" class="table table-bordered">
+                                            <thead>
+                                                <tr class="success">
+                                                    <th>Branch Name</th>
+                                                    <th>Booking Allowed?</th>
+                                                    
+                                                    <th>Delivery from all branch?</th>
+                                                    <th>Delivery from specific branch?</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="body_table">
+                                                {foreach item=row from=$branches key=k}
+                                                    <tr id="{$row->code}">
+                                                        <td style="vertical-align:top;" valign="top">{$row->name}</td>
+                                                        <td style="vertical-align:top;" valign="top"><input type="checkbox" id="{$row->code}-bkg" {if $row->bookingDeliveryFlag[0] == 1} checked {/if}/></td>
+                                                        
+                                                        <td style="vertical-align:top;" valign="top">
+                                                            <input type="checkbox" id="{$row->code}-dlv" {if $row->bookingDeliveryFlag[1] == 1} checked {/if}/>                                                       
+                                                        </td>
+                                                        <td>
+                                                            <div class="row">
+                                                                    <div class="col-md-3">
+                                                                        <label class="checkbox-inline"><input type="checkbox" value="" id="{$row->code}-toggle" onchange="toggleDlryBranch('{$row->code}')"/> Choose All Branches</label>
+                                                                    </div>
+                                                            </div>
+                                                                    <br>        
+                                                            <div class="row">                                                                
+                                                                {foreach item=drow from=$branches key=dr}
+                                                                    {if $drow->code != $row->code}
+                                                                    <div class="col-md-3">
+                                                                        <label class="checkbox-inline"><input type="checkbox" value="{$drow->code}" class="{$row->code}-dlvr" onclick="" {if $row->deliveryBranchList[$drow->code] == 1} checked {/if}/> {$drow->name}</label>
+                                                                    </div> 
+                                                                    {/if}
+                                                                {/foreach}
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <button class="btn btn-success" type="button"  onclick="updateOrganizationFlag('{$row->code}')">Save</button>
+                                                        </td>
+                                                    </tr>
+                                                {/foreach} 
+                                           </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                            </div><!--panel Body end-->
+                        </div><!--panel end-->
+                    </div>
+                </div><!--row end-->
+            </div><!--content end-->
+        </div>
+    </div>
+</div>
+
+
+<script>
+$( document ).ready(function() {
+    $('#branch-filter').select2();
+    
+    $('#branch-filter').on('change', function() {
+        $('.body_table tr').addClass('hide');
+      $('#'+this.value).removeClass("hide");
+
+      if(this.value == "All"){
+          showAllBranch();
+        }
+    });
+});
+
+function showAllBranch(){
+    $('.body_table tr').removeClass('hide');
+}
+
+function toggleDlryBranch(code) {
+    var chked = $('#'+code+'-toggle').is(':checked');
+    $('input.' + code +'-dlvr').prop('checked', chked);
+}
+function togglePay(code) {
+    var chked = $('#'+code+'-pay-toggle').is(':checked');
+    $('input.pay-type-' + code).prop('checked', chked);
+}
+    
+function updateOrganizationFlag(code,flag){  
+    var data = {};
+    data.code = code;
+    if($('#' + code +'-bkg').is(":checked")){
+        data.bookingFlag = '1';
+    } else {
+        data.bookingFlag = '0';
+    }
+    if($('#' + code +'-dlv').is(":checked")){
+        data.deliveryFlag = '1';
+    } else {
+        data.deliveryFlag = '0';
+    }
+    data.bookingDeliveryFlag = data.bookingFlag+data.deliveryFlag;
+    
+    data.deliveryBranchList = [];
+    $('input.' + code +'-dlvr:checkbox:checked').each(function () {
+        data.deliveryBranchList.push( $(this).val() );
+    });
+    
+    // data.payType = [];
+    // $('input.pay-type-' + code +':checkbox:checked').each(function () {
+    //     var val = $(this).val();
+    //     data.payType.push({ code : val });
+    // });
+        
+    var loading_overlay = iosOverlay({
+        text: "Loading",
+        icon: "fa fa-spinner fa-spin"
+    });
+    $.ajax({
+        type: "POST",
+        dataType: 'json',
+        url: base_url + "cargo/update-organization",
+        data: data,
+        success: function(response) {
+            if (response.status == 1) {
+                 loading_overlay.update({
+                    icon: "fa fa-check",
+                    text: "Success!"
+                });
+            } else {
+                loading_overlay.update({
+                    icon: "fa fa-times",
+                    text: "Sorry!"
+                });
+            }
+            window.setTimeout(function() {
+                loading_overlay.hide();
+            }, 2000);
+        }
+    });    
+}    
+</script>    

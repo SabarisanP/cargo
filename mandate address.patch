@@ -1,0 +1,98 @@
+Index: application/controllers/cargo.php
+===================================================================
+--- application/controllers/cargo.php	(revision 5256)
++++ application/controllers/cargo.php	(working copy)
+@@ -15714,6 +15714,11 @@
+         }
+         $address = json_decode($address);
+         $data['address'] = $address->data;
++        $data['mandateAddressOnBookingFlag'] =$cargo_setting->mandateAddressOnBookingFlag?true:false;
++        $data['toStationCode'] =$this->input->post('toStationCode');
++        // echo "<pre>";
++        // print_r($data['toStationCode']);
++        // exit;
+ 
+         $namespaceNames = $this->api_model->getNamespaceStation(array('authtoken' => _get_user_hash()));
+         $namespaceNames = json_decode($namespaceNames);
+Index: application/views/site/cargo/edit-door-delivery.tpl
+===================================================================
+--- application/views/site/cargo/edit-door-delivery.tpl	(revision 5256)
++++ application/views/site/cargo/edit-door-delivery.tpl	(working copy)
+@@ -82,6 +82,8 @@
+ <input type="hidden" id="hid-user-code" value="{$user}">
+ 
+ <script>
++    var mandateAddressOnBookingFlag ={$mandateAddressOnBookingFlag|json_encode}
++    var toStationCode ={$toStationCode|json_encode}
+     $('#dd_station').val(lrdata.toStation.code || '').select2();
+     $('#edit-dd-charges').val(lrdata.deliveryHandlingAmount || 0);
+     
+@@ -180,31 +182,33 @@
+ 
+         $('.inp_error').removeClass('inp_error');
+         //if (toCustomerAddressCode == 'OTHER') {
+-        if($('#door-delivery-pannel').hasClass('hide') == false){
+-            if (!data.name) {
+-                $('#dd_address_type').addClass('inp_error');
+-                err++;
++        if ($('#door-delivery-pannel').hasClass('hide') == false) {
++            if (mandateAddressOnBookingFlag == true) {
++                if (!data.name) {
++                    $('#dd_address_type').addClass('inp_error');
++                    err++;
++                }
++                if (!data.address1) {
++                    $('#dd_address1').addClass('inp_error');
++                    err++;
++                }
++                if (!data.address2) {
++                    $('#dd_address2').addClass('inp_error');
++                    err++;
++                }
++                if (!data.landmark) {
++                    $('#dd_landmark').addClass('inp_error');
++                    err++;
++                }
++                if (!data.pincode) {
++                    $('#dd_pincode').addClass('inp_error');
++                    err++;
++                }
++                if (!data.station) {
++                    $('#dd_station').addClass('inp_error');
++                    err++;
++                }
+             }
+-            if (!data.address1) {
+-                $('#dd_address1').addClass('inp_error');
+-                err++;
+-            }
+-            if (!data.address2) {
+-                $('#dd_address2').addClass('inp_error');
+-                err++;
+-            }
+-            if (!data.landmark) {
+-                $('#dd_landmark').addClass('inp_error');
+-                err++;
+-            }
+-            if (!data.pincode) {
+-                $('#dd_pincode').addClass('inp_error');
+-                err++;
+-            }
+-            if (!data.station) {
+-                $('#dd_station').addClass('inp_error');
+-                err++;
+-            }
+         }
+ 
+         // if (isNaN(data.deliveryHandlingAmount) || Number(data.deliveryHandlingAmount) <= 0) {
+@@ -240,4 +244,8 @@
+             }
+         });
+     }
+-</script>
++
++    if (mandateAddressOnBookingFlag == false) {
++        $('#dd_station').val(toStationCode).trigger('change');
++    }
++</script>
+\ No newline at end of file

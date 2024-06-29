@@ -1,0 +1,59 @@
+.container-fluid{ background-color:#cca351 !important; }
+#navigation .main-nav > li > a:hover {
+    text-decoration: none;
+    background: #ba954c !important;
+}
+
+#navigation .main-nav > li.open > a {
+    background: #ba954c !important;
+    text-decoration: none;
+}
+#navigation .dropdown-menu {
+/*    border-color: #ba954c !important;*/
+    border-top-style: none;
+    border-top-width: 0;
+}
+#navigation .dropdown-menu > li > a:hover {
+    background: #ba954c;
+    color: #fff;
+    filter: none;
+}
+
+#navigation .dropdown-menu > li.dropdown-submenu .dropdown-menu {
+    border-top: 2px solid #ba954c;
+    -moz-border-radius: 0;
+    -webkit-border-radius: 0;
+    border-radius: 0;
+    margin-left: 0;
+}
+#navigation .dropdown-menu > li.dropdown-submenu:hover > a, #navigation .dropdown-menu > li.dropdown-submenu:focus > a {
+    background: #ba954c;
+    color: #fff;
+}
+
+.multi-column-dropdown li a:hover {
+    text-decoration: none;
+    color: #fff;
+    background-color: #ba954c ;
+}
+
+#navigation .user .dropdown.open {
+    background: #ba954c !important;
+}
+#navigation .user .icon-nav > li > a:hover {
+    background: #ba954c !important;
+    text-decoration: none;
+}
+.name_scroll:hover {
+    background:#ba954c !important;
+    color: #FFFFFF !important;
+    filter: none !important;
+    text-decoration:none;
+}
+
+#navigation #brand{
+    background: url("../img/evacay-logo.png") center left no-repeat;
+    padding-left: 55px;
+    padding-bottom:7px;
+}
+.label-product{ display: none;}

@@ -1,0 +1,116 @@
+Index: application/controllers/cargo.php
+===================================================================
+--- application/controllers/cargo.php	(revision 5346)
++++ application/controllers/cargo.php	(working copy)
+@@ -3865,6 +3865,7 @@
+         $data['namespaceCode'] = $this->session->userdata('namespace_id');
+         $data['from_date'] = $from_date;
+         $data['to_date'] = $to_date;
++        
+ 
+         if ($this->input->get('export') == 1 && $this->session->userdata('namespace_id') == "panindia") {
+             $filename = lang('lr') . '-booking-report';
+@@ -4003,7 +4004,8 @@
+         $data['namespaceCode'] = $this->session->userdata('namespace_id');
+         $data['from_date'] = $from_date;
+         $data['to_date'] = $to_date;
+-
++    
++   
+         if ($this->input->get('export') == 1 )  {
+             $filename = lang('lr') . '-booking-report-v2';
+             $this->load->excel('site/cargo/booking-report-list-v2-xls', $data, $filename);
+@@ -4123,6 +4125,7 @@
+         $data['from_date'] = $from_date;
+         $data['to_date'] = $to_date;
+ 
++     
+         if ($this->input->get('export') == 1 )  {
+             $filename = lang('lr') . '-delivery-report-v2';
+             $this->load->excel('site/cargo/delivery-report-list-v2-xls', $data, $filename);
+@@ -4227,6 +4230,9 @@
+         $result = $this->api_model->getDynamicReportDataWithMap($data);
+         $result = json_decode($result);
+         $data['result'] = $result->data;
++        // $data['cargo_setting'] = _get_cargo_settings();
++        // $cargo_lrGstTaxModel =$data['cargo_setting']->lrGstTaxModel;
++
+         $dataum = array();
+         if ($result->status == 1) {
+             if (is_array($result->data)) {
+@@ -4292,10 +4298,12 @@
+                             if ($result->data[$i]->transaction_mode != null) {
+                                 $payment_mode = $payment_mode . $result->data[$i]->transaction_mode .",";
+                             }
+-
+-                            $cgst_paid += $result->data[$i]->cgst_amount;
+-                            $sgst_paid += $result->data[$i]->sgst_amount;  
+-                            $igst_paid += $result->data[$i]->igst_amount;
++                            if($result->data[$i]->from_customer_gst =='' && $result->data[$i]->to_customer_gst !==''){
++                                $cgst_paid += $result->data[$i]->cgst_amount;
++                                $sgst_paid += $result->data[$i]->sgst_amount;  
++                                $igst_paid += $result->data[$i]->igst_amount;
++                            }
++                            
+                            
+                             $cargo_codes = $cargo_codes . $result->data[$i]->cargo_code .",";
+                             $case_received += $result->data[$i]->total_amount_paid;
+@@ -4313,10 +4321,12 @@
+                                 $payment_mode = $payment_mode  . $result->data[$i]->transaction_mode .",";
+                             }
+ 
+-                            $cgst_topay += $result->data[$i]->cgst_amount;
+-                            $sgst_topay += $result->data[$i]->sgst_amount;
+-                            $igst_topay += $result->data[$i]->igst_amount;
+-                           
++                            if($result->data[$i]->from_customer_gst !=='' && $result->data[$i]->to_customer_gst ==''){
++                                $cgst_topay += $result->data[$i]->cgst_amount;
++                                $sgst_topay += $result->data[$i]->sgst_amount;
++                                $igst_topay += $result->data[$i]->igst_amount;
++                            }
++
+                             $cargo_codes = $cargo_codes . $result->data[$i]->cargo_code .",";
+                             $case_received += $result->data[$i]->total_amount_paid;
+                             $freight_topay += $result->data[$i]->total_amount;
+@@ -8631,14 +8641,12 @@
+                 return;
+             }
+         }
++
++        $fromOrganization = $this->input->post('fromOrganization');
+         $toOrganization = $this->input->post('toOrganization');
+-
+-        if(isset($toOrganization)){
+-            $toOrganization= $toOrganization['code'];
+-        }else{
+-            $toOrganization=array('code' => $this->session->userdata('org_code'));
+-        }
+-
++        $fromOrganizationCode = isset($fromOrganization['code']) ? $fromOrganization['code'] : 'NA';
++        $toOrganizationCode = isset($toOrganization['code']) ? $toOrganization['code'] : 'NA';
++            
+         $ogpl = $this->api_model->cargoOGPLupdate(array(
+             'activeFlag' => $this->input->post('activeFlag'),
+             'code' => $this->input->post('code') ?: '',
+@@ -8645,8 +8653,8 @@
+             'name' => $this->input->post('name'),
+             'fromStation' => $this->input->post('fromStation'),
+             'toStation' => $this->input->post('toStation'),
+-            'fromOrganization' => array('code' => $this->session->userdata('org_code')),
+-            'toOrganization' => array('code' => $toOrganization),
++            'fromOrganization' => array('code' => $fromOrganizationCode?$fromOrganizationCode:"NA"),
++            'toOrganization' => array('code' => $toOrganizationCode?$toOrganizationCode:"NA"),
+             'viaStations' => $this->input->post('viaStations') ?: [],
+             'viaZones' => $this->input->post('viaZones') ?: [],
+             'hubViaStations' => $this->input->post('linkLoadStations') ?: [],
+@@ -8694,8 +8702,8 @@
+                 'transitDetailsType' => array('code' => 'DFLT'),
+                 'toStation' => array('code' => $row['to']),
+                 'fromStation' => array('code' => $row['from']),
+-                'fromOrganization' => array('code' => $row['oldTransitOrg']),
+-                'toOrganization' => array('code' => $row['transitOrganization']),
++                'fromOrganization' => array('code' => $fromOrganizationCode),
++                'toOrganization' => array('code' => $toOrganizationCode),
+                 'transitCargo' => array('code' => $ogpl->data->code),
+                 'transitOrganization' => array('code' => $row['transitOrganization']),
+                 'cargoList' => $codes

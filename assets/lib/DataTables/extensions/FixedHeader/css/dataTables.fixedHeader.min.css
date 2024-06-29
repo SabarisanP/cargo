@@ -1,0 +1,12 @@
+div.FixedHeader_Cloned th,
+div.FixedHeader_Cloned td {
+  background-color: #64b92a !important;
+  color:white;
+  font-weight: 500;
+}
+/* div.FixedHeader_Cloned{
+    top:52px;
+}
+.FixedHeader_Cloned{
+    top: 52px;
+} */

@@ -1,0 +1,53 @@
+.container-fluid{ background-color:#1E3F20 !important; }
+#navigation .main-nav > li > a:hover {   text-decoration: none;    background: #345830 !important;}
+#navigation .main-nav > li.open > a {    background: #345830 !important;    text-decoration: none;}
+#navigation .dropdown-menu {/*    border-color: #345830 !important;*/    border-top-style: none;    border-top-width: 0;}
+#navigation .dropdown-menu > li > a:hover {    background: #345830;    color: #fff;    filter: none;}
+#navigation .dropdown-menu > li.dropdown-submenu .dropdown-menu {    border-top: 2px solid #345830;    -moz-border-radius: 0;    -webkit-border-radius: 0;    border-radius: 0;    margin-left: 0;}
+#navigation .dropdown-menu > li.dropdown-submenu:hover > a, #navigation .dropdown-menu > li.dropdown-submenu:focus > a {    background: #345830;    color: #fff;}
+.multi-column-dropdown li a:hover {    text-decoration: none;    color: #fff;    background-color: #345830 ;}
+#navigation .user .dropdown.open {    background: #345830 !important;}
+#navigation .user .icon-nav > li > a:hover {    background: #345830 !important;    text-decoration: none;}
+.name_scroll:hover {    background:#345830 !important;    color: #FFFFFF !important;    filter: none !important;    text-decoration:none;}
+
+
+.seat-booked-male-role-ugi6ojm408, .seat-booked-male-role-ugi6ojm407{  /* Admin, office */
+    border: 1px solid #5DD39E !important;
+    background-color: #5DD39E !important;
+    color:#fff !important;
+}
+.seat-booked-ladies-role-ugi6ojm408, .seat-booked-ladies-role-ugi6ojm407{  /* Admin, office */
+    border: 2px solid #5DD39E !important;
+}
+
+.seat-booked-male-role-ugi6ojm405, .seat-booked-male-role-ugi7cd54426, .seat-booked-male-role-ugi7of43432{  /* Agent, Way ticket, Blocked agent  */
+    border: 1px solid #2A9D8F !important;
+    background-color: #2A9D8F !important;
+    color:#fff !important;
+}
+.seat-booked-ladies-role-ugi6ojm405, .seat-booked-ladies-role-ugi7cd54426, .seat-booked-ladies-role-ugi7of43432{  /* Agent, Way ticket, Blocked agent */
+    border: 2px solid #2A9D8F !important;
+}
+
+.seat-booked-male-role-ugi6ojm404{  /* API Agent */
+    border: 1px solid #E76F51 !important;
+    background-color: #E76F51 !important;
+    color:#fff !important;
+}
+.seat-booked-ladies-role-ugi6ojm404{  /* API Agent */
+    border: 2px solid #E76F51 !important;
+}
+
+.seat-booked-male-role-ugi6ojm406{  /* Customer */
+    border: 1px solid #5CA4A9 !important;
+    background-color: #5CA4A9 !important;
+    color:#fff !important;
+}
+.seat-booked-ladies-role-ugi6ojm406{  /* Customer */
+    border: 2px solid #5CA4A9 !important;
+}
+
+.schedule-seat{
+    background-color: #27AE60 !important;
+    border: 1px solid #12532e !important;
+}

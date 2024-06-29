@@ -1,0 +1,18 @@
+{
+  "status": 1,
+  "data": {
+    "auth" : {
+      "allowDirectBitsLogin" : 1
+    },
+    "tripChart": {
+      "showSettlementFareOnly": 0,
+      "optionalVehicleAllocation": 0,
+      "gpsShareTripList": 1,
+      "gpsShareTripChart": 0
+    },
+    "cargo": {
+      "serviceTaxMinTotal": 750,
+      "serviceTaxPercentage": 4.5
+    }
+  }
+}
